@@ -14,7 +14,9 @@ export const occurrencesMock: Occurrence[] = [
     status: 'open',
     resolutionVotesCount: 0,
     reportsCount: 0,
+    anonymousAuthorId: 'mock-author-1',
     createdAt: '2026-05-20T10:30:00.000Z',
+    updatedAt: '2026-05-20T10:30:00.000Z',
     resolutionVotes: [],
   },
   {
@@ -30,10 +32,12 @@ export const occurrencesMock: Occurrence[] = [
     status: 'resolution_suggested',
     resolutionVotesCount: 2,
     reportsCount: 0,
+    anonymousAuthorId: 'mock-author-2',
     createdAt: '2026-05-19T14:00:00.000Z',
+    updatedAt: '2026-05-22T15:10:00.000Z',
     resolutionVotes: [
-      { id: 'r1', photoUrl: 'https://images.unsplash.com/photo-1604187351574-c75ca79f5807?auto=format&fit=crop&w=900&q=80', note: 'O local parece ter sido limpo.', createdAt: '2026-05-22T09:20:00.000Z', reportsCount: 0 },
-      { id: 'r2', photoUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=900&q=80', note: 'Passei hoje e estava melhor.', createdAt: '2026-05-22T15:10:00.000Z', reportsCount: 0 },
+      { id: 'r1', occurrenceId: '2', anonymousVisitorId: 'mock-visitor-r1', status: 'valid', photoUrl: 'https://images.unsplash.com/photo-1604187351574-c75ca79f5807?auto=format&fit=crop&w=900&q=80', note: 'O local parece ter sido limpo.', createdAt: '2026-05-22T09:20:00.000Z', reportsCount: 0 },
+      { id: 'r2', occurrenceId: '2', anonymousVisitorId: 'mock-visitor-r2', status: 'valid', photoUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=900&q=80', note: 'Passei hoje e estava melhor.', createdAt: '2026-05-22T15:10:00.000Z', reportsCount: 0 },
     ],
   },
   {
@@ -49,7 +53,9 @@ export const occurrencesMock: Occurrence[] = [
     status: 'under_review',
     resolutionVotesCount: 0,
     reportsCount: 3,
+    anonymousAuthorId: 'mock-author-3',
     createdAt: '2026-05-18T08:15:00.000Z',
+    updatedAt: '2026-05-18T08:15:00.000Z',
     resolutionVotes: [],
   },
   {
@@ -65,12 +71,14 @@ export const occurrencesMock: Occurrence[] = [
     status: 'resolved',
     resolutionVotesCount: 3,
     reportsCount: 0,
+    anonymousAuthorId: 'mock-author-4',
     createdAt: '2026-05-15T16:00:00.000Z',
+    updatedAt: '2026-05-21T12:00:00.000Z',
     resolvedAt: '2026-05-21T12:00:00.000Z',
     resolutionVotes: [
-      { id: 'r3', photoUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T08:00:00.000Z', reportsCount: 0 },
-      { id: 'r4', photoUrl: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T09:30:00.000Z', reportsCount: 0 },
-      { id: 'r5', photoUrl: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T12:00:00.000Z', reportsCount: 0 },
+      { id: 'r3', occurrenceId: '4', anonymousVisitorId: 'mock-visitor-r3', status: 'valid', photoUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T08:00:00.000Z', reportsCount: 0 },
+      { id: 'r4', occurrenceId: '4', anonymousVisitorId: 'mock-visitor-r4', status: 'valid', photoUrl: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T09:30:00.000Z', reportsCount: 0 },
+      { id: 'r5', occurrenceId: '4', anonymousVisitorId: 'mock-visitor-r5', status: 'valid', photoUrl: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T12:00:00.000Z', reportsCount: 0 },
     ],
   },
 ];

@@ -1,11 +1,91 @@
 import { useMemo, useState } from 'react';
-import { PageHeader } from '../../components/layout/PageHeader';
+
 import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { occurrencesMock } from '../../mocks/occurrencesMock';
+import { getOccurrences } from '../../services/occurrencesLocalService';
 import { occurrenceCategories } from '../../utils/categories';
 import type { OccurrenceStatus } from '../../utils/statusLabels';
+
 import styles from './styles.module.css';
-const statuses: Array<{label:string;value:'all'|OccurrenceStatus}>=[{label:'Todas',value:'all'},{label:'Abertas',value:'open'},{label:'Resolvidas',value:'resolved'},{label:'Revisão',value:'under_review'}];
-export function OccurrencesList(){const[status,setStatus]=useState<'all'|OccurrenceStatus>('all');const[category,setCategory]=useState('all');const[search,setSearch]=useState('');const filtered=useMemo(()=>occurrencesMock.filter((occurrence)=>{const matchesStatus=status==='all'||occurrence.status===status;const matchesCategory=category==='all'||occurrence.category===category;const text=`${occurrence.title} ${occurrence.description} ${occurrence.neighborhood}`.toLowerCase();return matchesStatus&&matchesCategory&&text.includes(search.toLowerCase());}),[status,category,search]);return <div className="page stack"><PageHeader eyebrow="Ocorrências" title="Registros da comunidade" description="Acompanhe os pontos cadastrados, filtre por categoria e veja quais já foram resolvidos." action={<Button to="/occurrences/new">Nova ocorrência</Button>}/><section className={styles.filters}><input value={search} onChange={(event)=>setSearch(event.target.value)} placeholder="Buscar por bairro, descrição ou título"/><div className={styles.chips}>{statuses.map((item)=><button key={item.value} className={status===item.value?styles.active:''} onClick={()=>setStatus(item.value)}>{item.label}</button>)}</div><select value={category} onChange={(event)=>setCategory(event.target.value)}><option value="all">Todas as categorias</option>{occurrenceCategories.map((item)=><option key={item.id} value={item.id}>{item.label}</option>)}</select></section><section className="section">{filtered.length>0?filtered.map((occurrence)=><OccurrenceCard key={occurrence.id} occurrence={occurrence}/>):<EmptyState title="Nada encontrado" description="Tente mudar os filtros ou registre uma nova ocorrência." actionLabel="Registrar ocorrência" actionTo="/occurrences/new"/>}</section></div>}
+
+const statuses: Array<{ label: string; value: 'all' | OccurrenceStatus }> = [
+  { label: 'Todas', value: 'all' },
+  { label: 'Abertas', value: 'open' },
+  { label: 'Resolvidas', value: 'resolved' },
+  { label: 'Revisão', value: 'under_review' },
+];
+
+export function OccurrencesList() {
+  const occurrences = useMemo(() => getOccurrences(), []);
+  const [status, setStatus] = useState<'all' | OccurrenceStatus>('all');
+  const [category, setCategory] = useState('all');
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(
+    () =>
+      occurrences.filter((occurrence) => {
+        const matchesStatus = status === 'all' || occurrence.status === status;
+        const matchesCategory = category === 'all' || occurrence.category === category;
+        const text = `${occurrence.title} ${occurrence.description} ${occurrence.neighborhood}`.toLowerCase();
+
+        return matchesStatus && matchesCategory && text.includes(search.toLowerCase());
+      }),
+    [category, occurrences, search, status],
+  );
+
+  return (
+    <div className="page stack">
+      <PageHeader
+        eyebrow="Ocorrências"
+        title="Registros da comunidade"
+        description="Acompanhe os pontos cadastrados, filtre por categoria e veja quais já foram resolvidos."
+        action={<Button to="/occurrences/new">Nova ocorrência</Button>}
+      />
+
+      <section className={styles.filters}>
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Buscar por bairro, descrição ou título"
+        />
+
+        <div className={styles.chips}>
+          {statuses.map((item) => (
+            <button
+              key={item.value}
+              className={status === item.value ? styles.active : ''}
+              onClick={() => setStatus(item.value)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <select value={category} onChange={(event) => setCategory(event.target.value)}>
+          <option value="all">Todas as categorias</option>
+          {occurrenceCategories.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      <section className="section">
+        {filtered.length > 0 ? (
+          filtered.map((occurrence) => <OccurrenceCard key={occurrence.id} occurrence={occurrence} />)
+        ) : (
+          <EmptyState
+            title="Nada encontrado"
+            description="Tente mudar os filtros ou registre uma nova ocorrência."
+            actionLabel="Registrar ocorrência"
+            actionTo="/occurrences/new"
+          />
+        )}
+      </section>
+    </div>
+  );
+}

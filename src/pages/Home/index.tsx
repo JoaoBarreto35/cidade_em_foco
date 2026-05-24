@@ -1,8 +1,74 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+
+import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
-import { occurrencesMock } from '../../mocks/occurrencesMock';
+import { getOccurrences } from '../../services/occurrencesLocalService';
+
 import styles from './styles.module.css';
-export function Home(){const open=occurrencesMock.filter(o=>o.status==='open').length;const resolved=occurrencesMock.filter(o=>o.status==='resolved').length;const review=occurrencesMock.filter(o=>o.status==='under_review').length;return <div className="page stack"><PageHeader eyebrow="Atividade extensionista" title="Mapeie riscos urbanos da sua comunidade" description="Registre focos de dengue, lixo acumulado, esgoto a céu aberto, mato alto e outros problemas com foto e localização." action={<Button to="/occurrences/new">Registrar ocorrência</Button>}/><section className={styles.actions}><Button to="/occurrences/new" fullWidth>➕ Registrar ocorrência</Button><Button to="/map" variant="secondary" fullWidth>🗺️ Ver mapa</Button></section><section className={styles.stats}><Card><strong>{open}</strong><span>Abertas</span></Card><Card><strong>{resolved}</strong><span>Resolvidas</span></Card><Card><strong>{review}</strong><span>Em revisão</span></Card></section><Card><div className={styles.how}><h2>Como funciona?</h2><ol><li>Moradores registram ocorrências com foto e localização.</li><li>A comunidade acompanha pela lista e pelo mapa.</li><li>Com 3 fotos de resolução, o item é resolvido.</li><li>Denúncias levam casos suspeitos para moderação.</li></ol></div></Card><section className="section"><div className={styles.sectionHeader}><h2>Ocorrências recentes</h2><Link to="/occurrences">Ver todas</Link></div>{occurrencesMock.slice(0,2).map(occurrence=><OccurrenceCard key={occurrence.id} occurrence={occurrence}/>)}</section></div>}
+
+export function Home() {
+  const occurrences = useMemo(() => getOccurrences(), []);
+  const open = occurrences.filter((occurrence) => occurrence.status === 'open').length;
+  const resolved = occurrences.filter((occurrence) => occurrence.status === 'resolved').length;
+  const review = occurrences.filter((occurrence) => occurrence.status === 'under_review').length;
+
+  return (
+    <div className="page stack">
+      <PageHeader
+        eyebrow="Atividade extensionista"
+        title="Mapeie riscos urbanos da sua comunidade"
+        description="Registre focos de dengue, lixo acumulado, esgoto a céu aberto, mato alto e outros problemas com foto e localização."
+        action={<Button to="/occurrences/new">Registrar ocorrência</Button>}
+      />
+
+      <section className={styles.actions}>
+        <Button to="/occurrences/new" fullWidth>
+          ➕ Registrar ocorrência
+        </Button>
+        <Button to="/map" variant="secondary" fullWidth>
+          🗺️ Ver mapa
+        </Button>
+      </section>
+
+      <section className={styles.stats}>
+        <Card>
+          <strong>{open}</strong>
+          <span>Abertas</span>
+        </Card>
+        <Card>
+          <strong>{resolved}</strong>
+          <span>Resolvidas</span>
+        </Card>
+        <Card>
+          <strong>{review}</strong>
+          <span>Em revisão</span>
+        </Card>
+      </section>
+
+      <Card>
+        <div className={styles.how}>
+          <h2>Como funciona?</h2>
+          <ol>
+            <li>Moradores registram ocorrências com foto e localização.</li>
+            <li>A comunidade acompanha pela lista e pelo mapa.</li>
+            <li>Com 3 fotos de resolução, o item é resolvido.</li>
+            <li>Denúncias levam casos suspeitos para moderação.</li>
+          </ol>
+        </div>
+      </Card>
+
+      <section className="section">
+        <div className={styles.sectionHeader}>
+          <h2>Ocorrências recentes</h2>
+          <Link to="/occurrences">Ver todas</Link>
+        </div>
+        {occurrences.slice(0, 2).map((occurrence) => (
+          <OccurrenceCard key={occurrence.id} occurrence={occurrence} />
+        ))}
+      </section>
+    </div>
+  );
+}
