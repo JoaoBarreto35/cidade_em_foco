@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 
+import { OccurrenceMap } from '../../components/map/OccurrenceMap';
 import { ResolutionProgress } from '../../components/occurrences/ResolutionProgress';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Badge } from '../../components/ui/Badge';
@@ -55,6 +56,16 @@ export function OccurrenceDetails() {
           </div>
         </div>
       </Card>
+
+      <section className="section">
+        <h2 className={styles.sectionTitle}>Localização</h2>
+        <OccurrenceMap
+          occurrences={[occurrence]}
+          height="compact"
+          selectedOccurrenceId={occurrence.id}
+          showPopupLink={false}
+        />
+      </section>
 
       <Card>
         <div className={styles.info}>
