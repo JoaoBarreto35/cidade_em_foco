@@ -1,32 +1,4 @@
-import { Link } from 'react-router-dom';
-
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import styles from './styles.module.css';
-
-export function AdminLogin() {
-  return (
-    <main className={styles.page}>
-      <Card className={styles.card}>
-        <Link to="/" className={styles.backLink}>← Voltar ao app</Link>
-        <div className={styles.header}>
-          <span>🛡️</span>
-          <h1>Área administrativa</h1>
-          <p>Acesso restrito para moderação de ocorrências e resoluções denunciadas.</p>
-        </div>
-
-        <form className={styles.form}>
-          <label>
-            <span>E-mail</span>
-            <input type="email" placeholder="admin@email.com" />
-          </label>
-          <label>
-            <span>Senha</span>
-            <input type="password" placeholder="Sua senha" />
-          </label>
-          <Button fullWidth>Entrar</Button>
-        </form>
-      </Card>
-    </main>
-  );
-}
+export function AdminLogin(){return <main className={styles.page}><Card><div className={styles.content}><span className={styles.logo}>🌱</span><h1>Área administrativa</h1><p>Acesso reservado para moderação das ocorrências comunitárias.</p><input placeholder="E-mail"/><input placeholder="Senha" type="password"/><Button to="/admin" fullWidth>Entrar</Button></div></Card></main>}

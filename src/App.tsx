@@ -26,7 +26,6 @@ export default function App() {
         <Route path="/map" element={<MapPage />} />
         <Route path="/about" element={<About />} />
       </Route>
-
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/moderation" element={<AdminModeration />} />

@@ -1,10 +1,4 @@
-export type OccurrenceCategory = {
-  id: string;
-  label: string;
-  icon: string;
-  description: string;
-};
-
+export type OccurrenceCategory = { id: string; label: string; icon: string; description: string };
 export const occurrenceCategories: OccurrenceCategory[] = [
   { id: 'dengue_focus', label: 'Foco de dengue', icon: '🦟', description: 'Água parada, recipientes expostos ou possíveis criadouros.' },
   { id: 'trash', label: 'Lixo acumulado', icon: '🗑️', description: 'Descarte irregular ou acúmulo de resíduos em via pública.' },
@@ -15,7 +9,6 @@ export const occurrenceCategories: OccurrenceCategory[] = [
   { id: 'abandoned_land', label: 'Terreno abandonado', icon: '🏚️', description: 'Terreno sem manutenção, com risco sanitário ou urbano.' },
   { id: 'other', label: 'Outro risco urbano', icon: '⚠️', description: 'Outros problemas que afetam a comunidade.' },
 ];
-
 export function getCategoryById(categoryId: string): OccurrenceCategory {
   return occurrenceCategories.find((category) => category.id === categoryId) ?? occurrenceCategories[occurrenceCategories.length - 1];
 }

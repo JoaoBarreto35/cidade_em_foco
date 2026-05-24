@@ -1,75 +1,8 @@
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../../components/layout/PageHeader';
-import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
 import { occurrencesMock } from '../../mocks/occurrencesMock';
-import { occurrenceCategories } from '../../utils/categories';
 import styles from './styles.module.css';
-
-export function Home() {
-  const totalOccurrences = occurrencesMock.length;
-  const resolvedOccurrences = occurrencesMock.filter((occurrence) => occurrence.status === 'resolved').length;
-  const reviewOccurrences = occurrencesMock.filter((occurrence) => occurrence.status === 'under_review').length;
-
-  return (
-    <div className="page section">
-      <PageHeader
-        eyebrow="Atividade extensionista"
-        title="Mapeie riscos urbanos da sua comunidade"
-        description="Registre focos de dengue, lixo, esgoto a céu aberto, mato alto e outros problemas com foto e localização. A comunidade acompanha e confirma quando foi resolvido."
-        action={<Button to="/occurrences/new">Registrar ocorrência</Button>}
-      />
-
-      <section className={styles.actions}>
-        <Button to="/map" fullWidth>
-          Ver mapa da cidade
-        </Button>
-        <Button to="/occurrences" variant="secondary" fullWidth>
-          Ver ocorrências
-        </Button>
-      </section>
-
-      <section className={styles.stats} aria-label="Resumo da comunidade">
-        <Card>
-          <span className={styles.statValue}>{totalOccurrences}</span>
-          <span className={styles.statLabel}>Ocorrências</span>
-        </Card>
-        <Card>
-          <span className={styles.statValue}>{resolvedOccurrences}</span>
-          <span className={styles.statLabel}>Resolvidas</span>
-        </Card>
-        <Card>
-          <span className={styles.statValue}>{reviewOccurrences}</span>
-          <span className={styles.statLabel}>Em revisão</span>
-        </Card>
-      </section>
-
-      <section className="section">
-        <div className={styles.sectionTitle}>
-          <h2>Categorias monitoradas</h2>
-          <Badge tone="success">ODS 3, 6, 11 e 17</Badge>
-        </div>
-
-        <div className={styles.categories}>
-          {occurrenceCategories.slice(0, 6).map((category) => (
-            <Card key={category.id} className={styles.categoryCard}>
-              <span className={styles.categoryIcon}>{category.icon}</span>
-              <strong>{category.label}</strong>
-              <p>{category.description}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <Card className={styles.howItWorks}>
-        <h2>Como funciona?</h2>
-        <ol>
-          <li>Qualquer pessoa registra uma ocorrência com foto e localização.</li>
-          <li>A ocorrência aparece na lista e no mapa da comunidade.</li>
-          <li>Para resolver, são necessárias 3 confirmações diferentes com foto.</li>
-          <li>Denúncias levam itens suspeitos para revisão do administrador.</li>
-        </ol>
-      </Card>
-    </div>
-  );
-}
+export function Home(){const open=occurrencesMock.filter(o=>o.status==='open').length;const resolved=occurrencesMock.filter(o=>o.status==='resolved').length;const review=occurrencesMock.filter(o=>o.status==='under_review').length;return <div className="page stack"><PageHeader eyebrow="Atividade extensionista" title="Mapeie riscos urbanos da sua comunidade" description="Registre focos de dengue, lixo acumulado, esgoto a céu aberto, mato alto e outros problemas com foto e localização." action={<Button to="/occurrences/new">Registrar ocorrência</Button>}/><section className={styles.actions}><Button to="/occurrences/new" fullWidth>➕ Registrar ocorrência</Button><Button to="/map" variant="secondary" fullWidth>🗺️ Ver mapa</Button></section><section className={styles.stats}><Card><strong>{open}</strong><span>Abertas</span></Card><Card><strong>{resolved}</strong><span>Resolvidas</span></Card><Card><strong>{review}</strong><span>Em revisão</span></Card></section><Card><div className={styles.how}><h2>Como funciona?</h2><ol><li>Moradores registram ocorrências com foto e localização.</li><li>A comunidade acompanha pela lista e pelo mapa.</li><li>Com 3 fotos de resolução, o item é resolvido.</li><li>Denúncias levam casos suspeitos para moderação.</li></ol></div></Card><section className="section"><div className={styles.sectionHeader}><h2>Ocorrências recentes</h2><Link to="/occurrences">Ver todas</Link></div>{occurrencesMock.slice(0,2).map(occurrence=><OccurrenceCard key={occurrence.id} occurrence={occurrence}/>)}</section></div>}

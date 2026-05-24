@@ -1,75 +1,13 @@
-import { useParams } from 'react-router-dom';
-
+import { Link, useParams } from 'react-router-dom';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { ResolutionProgress } from '../../components/occurrences/ResolutionProgress';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { occurrencesMock } from '../../mocks/occurrencesMock';
-import { formatDate } from '../../utils/formatDate';
 import { getCategoryById } from '../../utils/categories';
+import { formatDate } from '../../utils/formatDate';
 import { getStatusInfo } from '../../utils/statusLabels';
 import styles from './styles.module.css';
-
-export function OccurrenceDetails() {
-  const { id } = useParams();
-  const occurrence = occurrencesMock.find((item) => item.id === id);
-
-  if (!occurrence) {
-    return <EmptyState title="Ocorrência não encontrada" description="O registro solicitado não está disponível." actionLabel="Voltar para lista" actionTo="/occurrences" />;
-  }
-
-  const category = getCategoryById(occurrence.category);
-  const statusInfo = getStatusInfo(occurrence.status);
-  const progressPercent = Math.min((occurrence.resolutionVotesCount / 3) * 100, 100);
-
-  return (
-    <div className="page section">
-      <PageHeader eyebrow={category.label} title={occurrence.title} description={occurrence.description} />
-
-      <Card className={styles.photoMock}>
-        <span>{category.icon}</span>
-        <strong>Foto da ocorrência</strong>
-        <small>Preview mockado nesta fase</small>
-      </Card>
-
-      <Card className={styles.infoCard}>
-        <div className={styles.row}>
-          <span>Status</span>
-          <Badge tone={statusInfo.tone}>{statusInfo.label}</Badge>
-        </div>
-        <div className={styles.row}>
-          <span>Bairro</span>
-          <strong>{occurrence.neighborhood}</strong>
-        </div>
-        <div className={styles.row}>
-          <span>Referência</span>
-          <strong>{occurrence.reference}</strong>
-        </div>
-        <div className={styles.row}>
-          <span>Criada em</span>
-          <strong>{formatDate(occurrence.createdAt)}</strong>
-        </div>
-      </Card>
-
-      <Card className={styles.resolutionCard}>
-        <h2>Resolução comunitária</h2>
-        <p>A ocorrência precisa de 3 confirmações diferentes com foto para ser considerada resolvida.</p>
-        <div className={styles.progressHeader}>
-          <span>{occurrence.resolutionVotesCount} de 3 confirmações</span>
-          <strong>{Math.round(progressPercent)}%</strong>
-        </div>
-        <div className={styles.progressTrack}>
-          <span style={{ width: `${progressPercent}%` }} />
-        </div>
-        <Button to={`/occurrences/${occurrence.id}/resolve`} fullWidth>
-          Informar resolução
-        </Button>
-      </Card>
-
-      <Button to={`/occurrences/${occurrence.id}/report`} variant="ghost" fullWidth>
-        Denunciar ocorrência
-      </Button>
-    </div>
-  );
-}
+export function OccurrenceDetails(){const{id}=useParams();const occurrence=occurrencesMock.find((item)=>item.id===id);if(!occurrence){return <EmptyState title="Ocorrência não encontrada" description="O registro solicitado não existe nos dados mockados." actionLabel="Voltar para lista" actionTo="/occurrences"/>}const category=getCategoryById(occurrence.category);const status=getStatusInfo(occurrence.status);return <div className="page stack"><PageHeader eyebrow="Detalhe da ocorrência" title={occurrence.title} description={`${category.icon} ${category.label} • ${occurrence.neighborhood}`} action={<Badge tone={status.tone}>{status.label}</Badge>}/><Card className={styles.photoCard}><img src={occurrence.photoUrl} alt={occurrence.title}/></Card><Card><div className={styles.info}><h2>Descrição</h2><p>{occurrence.description}</p><div className={styles.meta}><span>📍 {occurrence.reference}</span><span>🏘️ {occurrence.neighborhood}</span><span>📅 {formatDate(occurrence.createdAt)}</span></div></div></Card><Card><div className={styles.info}><ResolutionProgress votes={occurrence.resolutionVotesCount}/><p className={styles.help}>A ocorrência só será considerada resolvida após 3 confirmações diferentes com foto obrigatória.</p><div className={styles.actions}><Button to={`/occurrences/${occurrence.id}/resolve`} fullWidth>Informar resolução</Button><Button to={`/occurrences/${occurrence.id}/report`} variant="danger" fullWidth>Denunciar ocorrência</Button></div></div></Card><section className="section"><h2 className={styles.sectionTitle}>Fotos de resolução</h2>{occurrence.resolutionVotes.length>0?<div className={styles.resolutionGrid}>{occurrence.resolutionVotes.map((vote)=><Card key={vote.id}><img src={vote.photoUrl} alt="Foto de resolução" className={styles.resolutionImage}/><p>{vote.note??'Confirmação enviada pela comunidade.'}</p><span>📅 {formatDate(vote.createdAt)}</span><Link to={`/occurrences/${occurrence.id}/report`} className={styles.reportLink}>Denunciar resolução</Link></Card>)}</div>:<EmptyState title="Ainda sem fotos" description="Quando moradores enviarem confirmações, elas aparecerão aqui."/>}</section></div>}

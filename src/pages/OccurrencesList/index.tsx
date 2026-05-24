@@ -1,68 +1,11 @@
-import { Link } from 'react-router-dom';
-
+import { useMemo, useState } from 'react';
 import { PageHeader } from '../../components/layout/PageHeader';
-import { Badge } from '../../components/ui/Badge';
+import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { occurrencesMock } from '../../mocks/occurrencesMock';
-import { formatDate } from '../../utils/formatDate';
-import { getCategoryById } from '../../utils/categories';
-import { getStatusInfo } from '../../utils/statusLabels';
+import { occurrenceCategories } from '../../utils/categories';
+import type { OccurrenceStatus } from '../../utils/statusLabels';
 import styles from './styles.module.css';
-
-export function OccurrencesList() {
-  return (
-    <div className="page section">
-      <PageHeader
-        eyebrow="Ocorrências públicas"
-        title="Acompanhe os registros"
-        description="Veja os problemas cadastrados pela comunidade e acompanhe a evolução das resoluções."
-        action={<Button to="/occurrences/new">Nova ocorrência</Button>}
-      />
-
-      <section className={styles.filters}>
-        <button type="button">Todas</button>
-        <button type="button">Abertas</button>
-        <button type="button">Resolvidas</button>
-        <button type="button">Revisão</button>
-      </section>
-
-      <section className={styles.list}>
-        {occurrencesMock.map((occurrence) => {
-          const category = getCategoryById(occurrence.category);
-          const statusInfo = getStatusInfo(occurrence.status);
-          const progressPercent = Math.min((occurrence.resolutionVotesCount / 3) * 100, 100);
-
-          return (
-            <Link to={`/occurrences/${occurrence.id}`} key={occurrence.id}>
-              <Card className={styles.card}>
-                <div className={styles.cardTop}>
-                  <span className={styles.icon}>{category.icon}</span>
-                  <Badge tone={statusInfo.tone}>{statusInfo.label}</Badge>
-                </div>
-
-                <h2>{occurrence.title}</h2>
-                <p>{occurrence.description}</p>
-
-                <div className={styles.meta}>
-                  <span>{occurrence.neighborhood}</span>
-                  <span>{formatDate(occurrence.createdAt)}</span>
-                </div>
-
-                <div className={styles.progressArea}>
-                  <div className={styles.progressHeader}>
-                    <span>Resolução</span>
-                    <strong>{occurrence.resolutionVotesCount}/3</strong>
-                  </div>
-                  <div className={styles.progressTrack}>
-                    <span style={{ width: `${progressPercent}%` }} />
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          );
-        })}
-      </section>
-    </div>
-  );
-}
+const statuses: Array<{label:string;value:'all'|OccurrenceStatus}>=[{label:'Todas',value:'all'},{label:'Abertas',value:'open'},{label:'Resolvidas',value:'resolved'},{label:'Revisão',value:'under_review'}];
+export function OccurrencesList(){const[status,setStatus]=useState<'all'|OccurrenceStatus>('all');const[category,setCategory]=useState('all');const[search,setSearch]=useState('');const filtered=useMemo(()=>occurrencesMock.filter((occurrence)=>{const matchesStatus=status==='all'||occurrence.status===status;const matchesCategory=category==='all'||occurrence.category===category;const text=`${occurrence.title} ${occurrence.description} ${occurrence.neighborhood}`.toLowerCase();return matchesStatus&&matchesCategory&&text.includes(search.toLowerCase());}),[status,category,search]);return <div className="page stack"><PageHeader eyebrow="Ocorrências" title="Registros da comunidade" description="Acompanhe os pontos cadastrados, filtre por categoria e veja quais já foram resolvidos." action={<Button to="/occurrences/new">Nova ocorrência</Button>}/><section className={styles.filters}><input value={search} onChange={(event)=>setSearch(event.target.value)} placeholder="Buscar por bairro, descrição ou título"/><div className={styles.chips}>{statuses.map((item)=><button key={item.value} className={status===item.value?styles.active:''} onClick={()=>setStatus(item.value)}>{item.label}</button>)}</div><select value={category} onChange={(event)=>setCategory(event.target.value)}><option value="all">Todas as categorias</option>{occurrenceCategories.map((item)=><option key={item.id} value={item.id}>{item.label}</option>)}</select></section><section className="section">{filtered.length>0?filtered.map((occurrence)=><OccurrenceCard key={occurrence.id} occurrence={occurrence}/>):<EmptyState title="Nada encontrado" description="Tente mudar os filtros ou registre uma nova ocorrência." actionLabel="Registrar ocorrência" actionTo="/occurrences/new"/>}</section></div>}

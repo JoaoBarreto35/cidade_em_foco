@@ -1,75 +1,76 @@
-import type { OccurrenceStatus } from '../utils/statusLabels';
+import type { Occurrence } from '../types/occurrence';
 
-export type OccurrenceMock = {
-  id: string;
-  category: string;
-  title: string;
-  description: string;
-  neighborhood: string;
-  reference: string;
-  status: OccurrenceStatus;
-  resolutionVotesCount: number;
-  reportsCount: number;
-  createdAt: string;
-  latitude: number;
-  longitude: number;
-};
-
-export const occurrencesMock: OccurrenceMock[] = [
+export const occurrencesMock: Occurrence[] = [
   {
     id: '1',
     category: 'dengue_focus',
-    title: 'Água parada em terreno',
-    description: 'Possível foco de dengue em terreno com recipientes expostos e água parada.',
+    title: 'Água parada em terreno aberto',
+    description: 'Há recipientes com água parada em um terreno próximo à calçada. O local pode virar criadouro de mosquito.',
+    photoUrl: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=900&q=80',
+    latitude: -23.3053,
+    longitude: -45.9658,
+    reference: 'Próximo à escola municipal',
     neighborhood: 'Centro',
-    reference: 'Próximo à praça principal',
     status: 'open',
     resolutionVotesCount: 0,
     reportsCount: 0,
-    createdAt: '2026-05-20T10:00:00.000Z',
-    latitude: -23.305,
-    longitude: -45.965,
+    createdAt: '2026-05-20T10:30:00.000Z',
+    resolutionVotes: [],
   },
   {
     id: '2',
     category: 'trash',
-    title: 'Lixo acumulado na calçada',
-    description: 'Acúmulo de sacos de lixo e entulho próximo ao ponto de ônibus.',
-    neighborhood: 'Jardim Esperança',
-    reference: 'Perto do ponto de ônibus',
+    title: 'Lixo acumulado na esquina',
+    description: 'Sacos de lixo e resíduos foram deixados na esquina há alguns dias, causando mau cheiro e atraindo animais.',
+    photoUrl: 'https://images.unsplash.com/photo-1604187351574-c75ca79f5807?auto=format&fit=crop&w=900&q=80',
+    latitude: -23.2998,
+    longitude: -45.9571,
+    reference: 'Esquina da rua principal',
+    neighborhood: 'Jardim das Flores',
     status: 'resolution_suggested',
-    resolutionVotesCount: 1,
+    resolutionVotesCount: 2,
     reportsCount: 0,
-    createdAt: '2026-05-21T13:30:00.000Z',
-    latitude: -23.307,
-    longitude: -45.971,
+    createdAt: '2026-05-19T14:00:00.000Z',
+    resolutionVotes: [
+      { id: 'r1', photoUrl: 'https://images.unsplash.com/photo-1604187351574-c75ca79f5807?auto=format&fit=crop&w=900&q=80', note: 'O local parece ter sido limpo.', createdAt: '2026-05-22T09:20:00.000Z', reportsCount: 0 },
+      { id: 'r2', photoUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=900&q=80', note: 'Passei hoje e estava melhor.', createdAt: '2026-05-22T15:10:00.000Z', reportsCount: 0 },
+    ],
   },
   {
     id: '3',
     category: 'open_sewage',
-    title: 'Esgoto a céu aberto',
-    description: 'Vazamento constante de esgoto na via, com mau cheiro e risco sanitário.',
+    title: 'Esgoto escorrendo na via',
+    description: 'Há água com mau cheiro escorrendo pela rua, próxima a residências e área de circulação de pedestres.',
+    photoUrl: 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=900&q=80',
+    latitude: -23.3122,
+    longitude: -45.9712,
+    reference: 'Perto do ponto de ônibus',
     neighborhood: 'Parque Brasil',
-    reference: 'Rua lateral da escola',
     status: 'under_review',
     resolutionVotesCount: 0,
     reportsCount: 3,
-    createdAt: '2026-05-22T08:10:00.000Z',
-    latitude: -23.31,
-    longitude: -45.96,
+    createdAt: '2026-05-18T08:15:00.000Z',
+    resolutionVotes: [],
   },
   {
     id: '4',
     category: 'tall_grass',
     title: 'Mato alto em área pública',
-    description: 'Vegetação alta ocupando parte da calçada e dificultando passagem.',
-    neighborhood: 'Vila Nova',
+    description: 'Área pública com mato alto dificultando passagem e aumentando risco de insetos e animais.',
+    photoUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80',
+    latitude: -23.3181,
+    longitude: -45.9552,
     reference: 'Ao lado da quadra',
+    neighborhood: 'Vila Verde',
     status: 'resolved',
     resolutionVotesCount: 3,
     reportsCount: 0,
-    createdAt: '2026-05-18T16:45:00.000Z',
-    latitude: -23.302,
-    longitude: -45.958,
+    createdAt: '2026-05-15T16:00:00.000Z',
+    resolvedAt: '2026-05-21T12:00:00.000Z',
+    resolutionVotes: [
+      { id: 'r3', photoUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T08:00:00.000Z', reportsCount: 0 },
+      { id: 'r4', photoUrl: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T09:30:00.000Z', reportsCount: 0 },
+      { id: 'r5', photoUrl: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=900&q=80', createdAt: '2026-05-21T12:00:00.000Z', reportsCount: 0 },
+    ],
   },
 ];

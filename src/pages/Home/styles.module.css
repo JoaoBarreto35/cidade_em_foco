@@ -1,14 +1,1 @@
-.actions { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-.statValue { display: block; color: var(--color-primary-dark); font-size: 1.8rem; font-weight: 900; line-height: 1; }
-.statLabel { display: block; margin-top: 0.35rem; color: var(--color-muted); font-size: 0.78rem; font-weight: 700; }
-.sectionTitle { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-.sectionTitle h2 { margin: 0; font-size: 1.15rem; }
-.categories { display: grid; gap: 0.75rem; }
-.categoryCard { display: grid; gap: 0.45rem; }
-.categoryIcon { font-size: 1.8rem; }
-.categoryCard strong { font-size: 0.98rem; }
-.categoryCard p { margin: 0; color: var(--color-muted); font-size: 0.88rem; line-height: 1.45; }
-.howItWorks h2 { margin: 0 0 0.75rem; }
-.howItWorks ol { display: grid; gap: 0.55rem; margin: 0; padding-left: 1.2rem; color: var(--color-muted); line-height: 1.45; }
-@media (min-width: 760px) { .actions { grid-template-columns: repeat(2, 1fr); } .categories { grid-template-columns: repeat(3, 1fr); } }
+.actions{display:grid;grid-template-columns:1fr;gap:.75rem}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}.stats :global(section){display:grid;gap:.25rem;text-align:center}.stats strong{color:var(--color-primary-dark);font-size:1.6rem}.stats span{color:var(--color-muted);font-size:.78rem;font-weight:800}.how{display:grid;gap:.5rem}.how h2,.sectionHeader h2{margin:0}.how ol{display:grid;gap:.4rem;margin:0;padding-left:1.25rem;color:var(--color-muted);line-height:1.45}.sectionHeader{display:flex;align-items:center;justify-content:space-between;gap:1rem}.sectionHeader a{color:var(--color-primary);font-weight:900}@media (min-width:760px){.actions{grid-template-columns:repeat(2,1fr)}}

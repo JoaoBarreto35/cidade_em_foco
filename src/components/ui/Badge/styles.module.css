@@ -1,17 +1,1 @@
-.badge {
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.38rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.neutral { color: #475569; background: #f1f5f9; }
-.success { color: #166534; background: #dcfce7; }
-.warning { color: #92400e; background: #fef3c7; }
-.danger { color: #991b1b; background: #fee2e2; }
-.info { color: #1d4ed8; background: #dbeafe; }
+.badge{display:inline-flex;align-items:center;width:max-content;gap:.35rem;padding:.35rem .65rem;border-radius:999px;font-size:.74rem;font-weight:900}.neutral{color:#475569;background:#f1f5f9}.success{color:var(--color-success);background:var(--color-success-soft)}.warning{color:var(--color-warning);background:var(--color-warning-soft)}.danger{color:var(--color-danger);background:var(--color-danger-soft)}.info{color:var(--color-info);background:var(--color-info-soft)}

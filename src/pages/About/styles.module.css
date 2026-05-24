@@ -1,4 +1,1 @@
-.card { display: grid; gap: 0.7rem; }
-.card h2 { margin: 0; font-size: 1.15rem; }
-.card p { margin: 0; color: var(--color-muted); line-height: 1.55; }
-.badges { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.content{display:grid;gap:.75rem}.content h2{margin:.25rem 0 0}.content p{margin:0;color:var(--color-muted);line-height:1.6}

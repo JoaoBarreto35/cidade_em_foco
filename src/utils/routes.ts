@@ -1,9 +1,4 @@
-export type PublicRoute = {
-  path: string;
-  label: string;
-  icon: string;
-};
-
+export type PublicRoute = { path: string; label: string; icon: string };
 export const publicRoutes: PublicRoute[] = [
   { path: '/', label: 'Início', icon: '🏠' },
   { path: '/map', label: 'Mapa', icon: '🗺️' },
