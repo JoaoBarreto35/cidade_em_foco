@@ -1,0 +1,9 @@
+.form { display: grid; gap: 1rem; }
+.field { display: grid; gap: 0.45rem; }
+.field span { font-size: 0.86rem; font-weight: 800; }
+.field input, .field textarea, .field select { width: 100%; padding: 0.85rem 0.95rem; color: var(--color-text); background: var(--color-surface-soft); border: 1px solid var(--color-border); border-radius: var(--radius-md); outline: none; }
+.field textarea { resize: vertical; }
+.uploadBox, .locationBox { display: grid; gap: 0.3rem; padding: 1rem; color: var(--color-primary-dark); text-align: left; background: var(--color-primary-soft); border: 1px dashed rgba(22, 118, 79, 0.35); border-radius: var(--radius-lg); }
+.locationBox { color: #1d4ed8; background: #dbeafe; border-color: rgba(37, 99, 235, 0.28); }
+.uploadBox small, .locationBox small, .privacy { color: var(--color-muted); line-height: 1.45; }
+.privacy { margin: 0; font-size: 0.84rem; }

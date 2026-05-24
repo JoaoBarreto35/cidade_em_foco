@@ -1,0 +1,12 @@
+.photoMock { display: grid; min-height: 13rem; place-items: center; align-content: center; gap: 0.35rem; background: linear-gradient(135deg, rgba(22, 118, 79, 0.12), rgba(37, 99, 235, 0.08)); text-align: center; }
+.photoMock span { font-size: 3rem; }
+.photoMock small { color: var(--color-muted); }
+.infoCard { display: grid; gap: 0.8rem; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--color-muted); }
+.row strong { color: var(--color-text); text-align: right; }
+.resolutionCard { display: grid; gap: 0.8rem; }
+.resolutionCard h2 { margin: 0; font-size: 1.15rem; }
+.resolutionCard p { margin: 0; color: var(--color-muted); line-height: 1.45; }
+.progressHeader { display: flex; justify-content: space-between; color: var(--color-muted); font-size: 0.86rem; }
+.progressTrack { height: 0.7rem; overflow: hidden; background: var(--color-surface-soft); border-radius: 999px; }
+.progressTrack span { display: block; height: 100%; background: var(--color-primary); border-radius: inherit; }

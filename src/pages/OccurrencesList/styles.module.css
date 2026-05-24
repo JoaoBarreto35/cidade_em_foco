@@ -1,0 +1,14 @@
+.filters { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; }
+.filters button { flex: 0 0 auto; padding: 0.58rem 0.85rem; color: var(--color-primary-dark); font-weight: 800; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 999px; }
+.list { display: grid; gap: 0.85rem; }
+.card { display: grid; gap: 0.7rem; }
+.cardTop { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.icon { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; background: var(--color-primary-soft); border-radius: 999px; font-size: 1.3rem; }
+.card h2 { margin: 0; font-size: 1.12rem; }
+.card p { margin: 0; color: var(--color-muted); line-height: 1.45; }
+.meta { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; color: var(--color-muted); font-size: 0.82rem; font-weight: 700; }
+.progressArea { display: grid; gap: 0.35rem; }
+.progressHeader { display: flex; justify-content: space-between; color: var(--color-muted); font-size: 0.8rem; }
+.progressTrack { height: 0.55rem; overflow: hidden; background: var(--color-surface-soft); border-radius: 999px; }
+.progressTrack span { display: block; height: 100%; background: var(--color-primary); border-radius: inherit; }
+@media (min-width: 760px) { .list { grid-template-columns: repeat(2, 1fr); } }

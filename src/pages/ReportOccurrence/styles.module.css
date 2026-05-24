@@ -1,0 +1,8 @@
+.form { display: grid; gap: 1rem; }
+.reasons { display: grid; gap: 0.55rem; }
+.reason { display: flex; align-items: center; gap: 0.65rem; padding: 0.85rem; color: var(--color-muted); font-weight: 800; background: var(--color-surface-soft); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.reason input { accent-color: var(--color-primary); }
+.selected { color: var(--color-primary-dark); background: var(--color-primary-soft); border-color: rgba(22, 118, 79, 0.3); }
+.field { display: grid; gap: 0.45rem; }
+.field span { font-size: 0.86rem; font-weight: 800; }
+.field textarea { width: 100%; padding: 0.85rem 0.95rem; color: var(--color-text); background: var(--color-surface-soft); border: 1px solid var(--color-border); border-radius: var(--radius-md); outline: none; resize: vertical; }
