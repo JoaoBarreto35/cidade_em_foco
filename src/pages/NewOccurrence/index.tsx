@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { PageHeader } from '../../components/layout/PageHeader';
+import { LocationPicker } from '../../components/map/LocationPicker';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { createOccurrence } from '../../services/occurrencesLocalService';
@@ -13,6 +14,11 @@ import styles from './styles.module.css';
 type Coordinates = {
   latitude: number;
   longitude: number;
+};
+
+const DEFAULT_MANUAL_LOCATION: Coordinates = {
+  latitude: -23.3053,
+  longitude: -45.9658,
 };
 
 function readImageAsDataUrl(file: File): Promise<string> {
@@ -69,7 +75,8 @@ export function NewOccurrence() {
     setError('');
 
     if (!navigator.geolocation) {
-      setCoordinates({ latitude: -23.3053, longitude: -45.9658 });
+      setCoordinates(DEFAULT_MANUAL_LOCATION);
+      setError('Seu navegador não liberou GPS. Marque o ponto manualmente no mapa.');
       setLoadingLocation(false);
       return;
     }
@@ -83,8 +90,8 @@ export function NewOccurrence() {
         setLoadingLocation(false);
       },
       () => {
-        setCoordinates({ latitude: -23.3053, longitude: -45.9658 });
-        setError('Não conseguimos acessar o GPS. Usamos uma localização simulada para o MVP.');
+        setCoordinates(DEFAULT_MANUAL_LOCATION);
+        setError('Não conseguimos acessar o GPS. Marque ou ajuste o ponto manualmente no mapa.');
         setLoadingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 8000 },
@@ -158,15 +165,26 @@ export function NewOccurrence() {
 
           <div className={styles.uploadBox}>
             <strong>Localização obrigatória</strong>
-            <p>Usaremos o GPS do navegador. Se falhar, o MVP usa uma posição simulada.</p>
-            <button type="button" onClick={handleLocation}>
-              {coordinates ? '✅ Localização capturada' : '📍 Usar minha localização'}
+            <p>
+              Use o GPS para aproximar o local e toque no mapa para ajustar o pin exatamente onde
+              está o problema.
+            </p>
+            <button type="button" onClick={handleLocation} disabled={loadingLocation}>
+              {coordinates ? '✅ Atualizar pelo GPS' : '📍 Usar minha localização'}
             </button>
             {loadingLocation && <span className={styles.validation}>Buscando localização...</span>}
-            {coordinates && (
+
+            <div className={styles.mapPickerArea}>
+              <LocationPicker value={coordinates} onChange={setCoordinates} height="compact" />
+            </div>
+
+            {coordinates ? (
               <span className={styles.validation}>
-                Lat: {coordinates.latitude.toFixed(5)} • Long: {coordinates.longitude.toFixed(5)}
+                Pin selecionado: Lat {coordinates.latitude.toFixed(5)} • Long{' '}
+                {coordinates.longitude.toFixed(5)}
               </span>
+            ) : (
+              <span className={styles.validation}>Toque no mapa ou use o GPS para definir o ponto.</span>
             )}
           </div>
 

@@ -60,3 +60,8 @@
   font-size: 0.85rem;
   font-weight: 700;
 }
+
+.mapPickerArea {
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
