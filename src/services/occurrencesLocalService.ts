@@ -2,16 +2,24 @@ import { occurrencesMock } from '../mocks/occurrencesMock';
 import type {
   CreateOccurrenceInput,
   CreateOccurrenceReportInput,
+  CreateResolutionReportInput,
   CreateResolutionVoteInput,
   Occurrence,
+  ResolutionModerationItem,
   ResolutionVote,
 } from '../types/occurrence';
 import { getCategoryById } from '../utils/categories';
 
 const STORAGE_KEY = 'cidade_em_foco_occurrences_v1';
-const REPORTS_KEY = 'cidade_em_foco_occurrence_reports_v1';
+const OCCURRENCE_REPORTS_KEY = 'cidade_em_foco_occurrence_reports_v1';
+const RESOLUTION_REPORTS_KEY = 'cidade_em_foco_resolution_reports_v1';
 
-type OccurrenceReportRegistry = Record<string, string[]>;
+type ReportRegistry = Record<string, string[]>;
+
+type AdminActionResult = {
+  success: boolean;
+  error?: string;
+};
 
 function cloneOccurrences(occurrences: Occurrence[]): Occurrence[] {
   return occurrences.map((occurrence) => ({
@@ -24,23 +32,22 @@ function saveOccurrences(occurrences: Occurrence[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(occurrences));
 }
 
-function readReportsRegistry(): OccurrenceReportRegistry {
-  const stored = localStorage.getItem(REPORTS_KEY);
+function readRegistry(key: string): ReportRegistry {
+  const stored = localStorage.getItem(key);
 
   if (!stored) {
     return {};
   }
 
   try {
-    const parsed = JSON.parse(stored) as OccurrenceReportRegistry;
-    return parsed;
+    return JSON.parse(stored) as ReportRegistry;
   } catch {
     return {};
   }
 }
 
-function saveReportsRegistry(registry: OccurrenceReportRegistry): void {
-  localStorage.setItem(REPORTS_KEY, JSON.stringify(registry));
+function saveRegistry(key: string, registry: ReportRegistry): void {
+  localStorage.setItem(key, JSON.stringify(registry));
 }
 
 function createId(prefix: string): string {
@@ -54,13 +61,17 @@ function buildTitle(categoryId: string): string {
 
 function recalculateOccurrenceStatus(occurrence: Occurrence): Occurrence {
   if (occurrence.status === 'cancelled' || occurrence.status === 'duplicated') {
-    return occurrence;
+    return {
+      ...occurrence,
+      resolutionVotesCount: occurrence.resolutionVotes.filter((vote) => vote.status === 'valid').length,
+    };
   }
 
   if (occurrence.reportsCount >= 3) {
     return {
       ...occurrence,
       status: 'under_review',
+      resolutionVotesCount: occurrence.resolutionVotes.filter((vote) => vote.status === 'valid').length,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -97,6 +108,29 @@ function recalculateOccurrenceStatus(occurrence: Occurrence): Occurrence {
   };
 }
 
+function updateOccurrenceInList(
+  occurrenceId: string,
+  updater: (occurrence: Occurrence) => Occurrence,
+): AdminActionResult {
+  const occurrences = getOccurrences();
+  const occurrence = occurrences.find((item) => item.id === occurrenceId);
+
+  if (!occurrence) {
+    return { success: false, error: 'Ocorrência não encontrada.' };
+  }
+
+  const updated = updater(occurrence);
+  saveOccurrences(occurrences.map((item) => (item.id === occurrenceId ? updated : item)));
+
+  return { success: true };
+}
+
+function deleteRegistryEntry(key: string, entryId: string): void {
+  const registry = readRegistry(key);
+  delete registry[entryId];
+  saveRegistry(key, registry);
+}
+
 export function getOccurrences(): Occurrence[] {
   const stored = localStorage.getItem(STORAGE_KEY);
 
@@ -107,8 +141,7 @@ export function getOccurrences(): Occurrence[] {
   }
 
   try {
-    const parsed = JSON.parse(stored) as Occurrence[];
-    return parsed;
+    return JSON.parse(stored) as Occurrence[];
   } catch {
     const fallbackData = cloneOccurrences(occurrencesMock);
     saveOccurrences(fallbackData);
@@ -118,6 +151,14 @@ export function getOccurrences(): Occurrence[] {
 
 export function getOccurrenceById(id: string): Occurrence | undefined {
   return getOccurrences().find((occurrence) => occurrence.id === id);
+}
+
+export function getResolutionModerationItems(): ResolutionModerationItem[] {
+  return getOccurrences().flatMap((occurrence) =>
+    occurrence.resolutionVotes
+      .filter((vote) => vote.status === 'under_review' || vote.reportsCount >= 3)
+      .map((vote) => ({ occurrence, vote })),
+  );
 }
 
 export function createOccurrence(input: CreateOccurrenceInput): Occurrence {
@@ -159,6 +200,10 @@ export function createResolutionVote(input: CreateResolutionVoteInput): {
     return { error: 'Ocorrência não encontrada.' };
   }
 
+  if (occurrence.status === 'cancelled' || occurrence.status === 'duplicated') {
+    return { error: 'Esta ocorrência não aceita novas confirmações.' };
+  }
+
   const alreadyVoted = occurrence.resolutionVotes.some(
     (vote) => vote.anonymousVisitorId === input.anonymousVisitorId,
   );
@@ -194,7 +239,7 @@ export function createOccurrenceReport(input: CreateOccurrenceReportInput): {
   occurrence?: Occurrence;
   error?: string;
 } {
-  const registry = readReportsRegistry();
+  const registry = readRegistry(OCCURRENCE_REPORTS_KEY);
   const reports = registry[input.occurrenceId] ?? [];
 
   if (reports.includes(input.anonymousVisitorId)) {
@@ -210,7 +255,7 @@ export function createOccurrenceReport(input: CreateOccurrenceReportInput): {
 
   const updatedReports = [...reports, input.anonymousVisitorId];
   registry[input.occurrenceId] = updatedReports;
-  saveReportsRegistry(registry);
+  saveRegistry(OCCURRENCE_REPORTS_KEY, registry);
 
   const updatedOccurrence = recalculateOccurrenceStatus({
     ...occurrence,
@@ -224,7 +269,136 @@ export function createOccurrenceReport(input: CreateOccurrenceReportInput): {
   return { occurrence: updatedOccurrence };
 }
 
+export function createResolutionReport(input: CreateResolutionReportInput): {
+  occurrence?: Occurrence;
+  error?: string;
+} {
+  const registry = readRegistry(RESOLUTION_REPORTS_KEY);
+  const reports = registry[input.resolutionVoteId] ?? [];
+
+  if (reports.includes(input.anonymousVisitorId)) {
+    return { error: 'Este navegador já denunciou esta resolução.' };
+  }
+
+  const occurrences = getOccurrences();
+  const occurrence = occurrences.find((item) => item.id === input.occurrenceId);
+
+  if (!occurrence) {
+    return { error: 'Ocorrência não encontrada.' };
+  }
+
+  const voteExists = occurrence.resolutionVotes.some((vote) => vote.id === input.resolutionVoteId);
+
+  if (!voteExists) {
+    return { error: 'Resolução não encontrada.' };
+  }
+
+  const updatedReports = [...reports, input.anonymousVisitorId];
+  registry[input.resolutionVoteId] = updatedReports;
+  saveRegistry(RESOLUTION_REPORTS_KEY, registry);
+
+  const updatedOccurrence = recalculateOccurrenceStatus({
+    ...occurrence,
+    resolutionVotes: occurrence.resolutionVotes.map((vote) => {
+      if (vote.id !== input.resolutionVoteId) {
+        return vote;
+      }
+
+      return {
+        ...vote,
+        reportsCount: updatedReports.length,
+        status: updatedReports.length >= 3 ? 'under_review' : vote.status,
+      };
+    }),
+  });
+
+  saveOccurrences(
+    occurrences.map((item) => (item.id === updatedOccurrence.id ? updatedOccurrence : item)),
+  );
+
+  return { occurrence: updatedOccurrence };
+}
+
+export function adminKeepOccurrence(occurrenceId: string): AdminActionResult {
+  deleteRegistryEntry(OCCURRENCE_REPORTS_KEY, occurrenceId);
+
+  return updateOccurrenceInList(occurrenceId, (occurrence) =>
+    recalculateOccurrenceStatus({
+      ...occurrence,
+      reportsCount: 0,
+      moderationNotes: 'Ocorrência mantida após revisão administrativa.',
+      moderatedAt: new Date().toISOString(),
+    }),
+  );
+}
+
+export function adminCancelOccurrence(occurrenceId: string): AdminActionResult {
+  return updateOccurrenceInList(occurrenceId, (occurrence) => ({
+    ...occurrence,
+    status: 'cancelled',
+    moderatedAt: new Date().toISOString(),
+    moderationNotes: 'Ocorrência cancelada pela moderação.',
+    updatedAt: new Date().toISOString(),
+  }));
+}
+
+export function adminMarkOccurrenceAsDuplicated(occurrenceId: string): AdminActionResult {
+  return updateOccurrenceInList(occurrenceId, (occurrence) => ({
+    ...occurrence,
+    status: 'duplicated',
+    moderatedAt: new Date().toISOString(),
+    moderationNotes: 'Ocorrência marcada como duplicada pela moderação.',
+    updatedAt: new Date().toISOString(),
+  }));
+}
+
+export function adminKeepResolutionVote(
+  occurrenceId: string,
+  resolutionVoteId: string,
+): AdminActionResult {
+  deleteRegistryEntry(RESOLUTION_REPORTS_KEY, resolutionVoteId);
+
+  return updateOccurrenceInList(occurrenceId, (occurrence) =>
+    recalculateOccurrenceStatus({
+      ...occurrence,
+      resolutionVotes: occurrence.resolutionVotes.map((vote) =>
+        vote.id === resolutionVoteId
+          ? {
+              ...vote,
+              status: 'valid',
+              reportsCount: 0,
+              reviewedAt: new Date().toISOString(),
+              reviewNotes: 'Resolução mantida após revisão administrativa.',
+            }
+          : vote,
+      ),
+    }),
+  );
+}
+
+export function adminCancelResolutionVote(
+  occurrenceId: string,
+  resolutionVoteId: string,
+): AdminActionResult {
+  return updateOccurrenceInList(occurrenceId, (occurrence) =>
+    recalculateOccurrenceStatus({
+      ...occurrence,
+      resolutionVotes: occurrence.resolutionVotes.map((vote) =>
+        vote.id === resolutionVoteId
+          ? {
+              ...vote,
+              status: 'cancelled',
+              reviewedAt: new Date().toISOString(),
+              reviewNotes: 'Resolução cancelada pela moderação.',
+            }
+          : vote,
+      ),
+    }),
+  );
+}
+
 export function resetLocalOccurrences(): void {
   localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(REPORTS_KEY);
+  localStorage.removeItem(OCCURRENCE_REPORTS_KEY);
+  localStorage.removeItem(RESOLUTION_REPORTS_KEY);
 }

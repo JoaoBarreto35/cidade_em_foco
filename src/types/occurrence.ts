@@ -11,6 +11,8 @@ export type ResolutionVote = {
   reportsCount: number;
   status: ResolutionVoteStatus;
   createdAt: string;
+  reviewedAt?: string;
+  reviewNotes?: string;
 };
 
 export type Occurrence = {
@@ -30,6 +32,8 @@ export type Occurrence = {
   createdAt: string;
   updatedAt: string;
   resolvedAt?: string;
+  moderatedAt?: string;
+  moderationNotes?: string;
   resolutionVotes: ResolutionVote[];
 };
 
@@ -54,4 +58,15 @@ export type CreateResolutionVoteInput = {
 export type CreateOccurrenceReportInput = {
   occurrenceId: string;
   anonymousVisitorId: string;
+};
+
+export type CreateResolutionReportInput = {
+  occurrenceId: string;
+  resolutionVoteId: string;
+  anonymousVisitorId: string;
+};
+
+export type ResolutionModerationItem = {
+  occurrence: Occurrence;
+  vote: ResolutionVote;
 };

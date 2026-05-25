@@ -11,6 +11,7 @@ import { NewOccurrence } from './pages/NewOccurrence';
 import { OccurrenceDetails } from './pages/OccurrenceDetails';
 import { OccurrencesList } from './pages/OccurrencesList';
 import { ReportOccurrence } from './pages/ReportOccurrence';
+import { ReportResolution } from './pages/ReportResolution';
 import { ResolveOccurrence } from './pages/ResolveOccurrence';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/occurrences/:id" element={<OccurrenceDetails />} />
         <Route path="/occurrences/:id/resolve" element={<ResolveOccurrence />} />
         <Route path="/occurrences/:id/report" element={<ReportOccurrence />} />
+        <Route path="/occurrences/:id/resolutions/:resolutionId/report" element={<ReportResolution />} />
         <Route path="/map" element={<MapPage />} />
         <Route path="/about" element={<About />} />
       </Route>

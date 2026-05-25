@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { OccurrenceMap } from '../../components/map/OccurrenceMap';
 import { ResolutionProgress } from '../../components/occurrences/ResolutionProgress';
@@ -8,11 +8,32 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { getOccurrenceById } from '../../services/occurrencesLocalService';
+import type { ResolutionVoteStatus } from '../../types/occurrence';
 import { getCategoryById } from '../../utils/categories';
 import { formatDate } from '../../utils/formatDate';
 import { getStatusInfo } from '../../utils/statusLabels';
 
 import styles from './styles.module.css';
+
+type ResolutionStatusView = {
+  label: string;
+  tone: 'neutral' | 'success' | 'warning' | 'danger' | 'info';
+};
+
+const resolutionStatus: Record<ResolutionVoteStatus, ResolutionStatusView> = {
+  valid: {
+    label: 'Válida',
+    tone: 'success',
+  },
+  under_review: {
+    label: 'Em revisão',
+    tone: 'warning',
+  },
+  cancelled: {
+    label: 'Cancelada',
+    tone: 'danger',
+  },
+};
 
 export function OccurrenceDetails() {
   const { id } = useParams();
@@ -53,6 +74,7 @@ export function OccurrenceDetails() {
             <span>📍 {occurrence.reference}</span>
             <span>🏘️ {occurrence.neighborhood}</span>
             <span>📅 {formatDate(occurrence.createdAt)}</span>
+            {occurrence.reportsCount > 0 && <span>🚩 {occurrence.reportsCount} denúncia(s)</span>}
           </div>
         </div>
       </Card>
@@ -88,16 +110,30 @@ export function OccurrenceDetails() {
         <h2 className={styles.sectionTitle}>Fotos de resolução</h2>
         {occurrence.resolutionVotes.length > 0 ? (
           <div className={styles.resolutionGrid}>
-            {occurrence.resolutionVotes.map((vote) => (
-              <Card key={vote.id}>
-                <img src={vote.photoUrl} alt="Foto de resolução" className={styles.resolutionImage} />
-                <p>{vote.note ?? 'Confirmação enviada pela comunidade.'}</p>
-                <span>📅 {formatDate(vote.createdAt)}</span>
-                <Link to={`/occurrences/${occurrence.id}/report`} className={styles.reportLink}>
-                  Denunciar resolução
-                </Link>
-              </Card>
-            ))}
+            {occurrence.resolutionVotes.map((vote) => {
+              const voteStatus = resolutionStatus[vote.status];
+
+              return (
+                <Card key={vote.id} className={styles.resolutionCard}>
+                  <img src={vote.photoUrl} alt="Foto de resolução" className={styles.resolutionImage} />
+                  <div className={styles.resolutionHeader}>
+                    <Badge tone={voteStatus.tone}>{voteStatus.label}</Badge>
+                    {vote.reportsCount > 0 && <span>🚩 {vote.reportsCount}</span>}
+                  </div>
+                  <p>{vote.note ?? 'Confirmação enviada pela comunidade.'}</p>
+                  <span>📅 {formatDate(vote.createdAt)}</span>
+                  {vote.status !== 'cancelled' && (
+                    <Button
+                      to={`/occurrences/${occurrence.id}/resolutions/${vote.id}/report`}
+                      variant="danger"
+                      fullWidth
+                    >
+                      Denunciar resolução
+                    </Button>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <EmptyState
