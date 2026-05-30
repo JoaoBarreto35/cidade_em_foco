@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { CircleMarker, MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -14,6 +14,7 @@ type OccurrenceMapProps = {
   height?: 'compact' | 'default' | 'large';
   selectedOccurrenceId?: string;
   showPopupLink?: boolean;
+  showHeatmap?: boolean;
 };
 
 type Coordinates = {
@@ -45,12 +46,24 @@ function getMapCenter(occurrences: Occurrence[]): Coordinates {
   };
 }
 
+function getMapZoom(occurrences: Occurrence[], showHeatmap: boolean): number {
+  if (occurrences.length === 0) {
+    return 13;
+  }
+
+  if (showHeatmap) {
+    return 12;
+  }
+
+  return occurrences.length > 1 ? 13 : 15;
+}
+
 function getMarkerClassName(status: Occurrence['status']): string {
   if (status === 'resolved') {
     return 'occurrence-marker occurrence-marker-success';
   }
 
-  if (status === 'under_review') {
+  if (status === 'under_review' || status === 'resolution_suggested') {
     return 'occurrence-marker occurrence-marker-warning';
   }
 
@@ -74,15 +87,24 @@ function createMarkerIcon(occurrence: Occurrence, isSelected: boolean): L.DivIco
   });
 }
 
+function getHeatRadius(occurrence: Occurrence): number {
+  const reportWeight = Math.min(occurrence.reportsCount, 4) * 5;
+  const resolutionWeight = occurrence.status === 'resolved' ? -4 : 0;
+  const reviewWeight = occurrence.status === 'under_review' ? 8 : 0;
+
+  return Math.max(18, 24 + reportWeight + reviewWeight + resolutionWeight);
+}
+
 export function OccurrenceMap({
   occurrences,
   height = 'default',
   selectedOccurrenceId,
   showPopupLink = true,
+  showHeatmap = false,
 }: OccurrenceMapProps) {
   const center = getMapCenter(occurrences);
-  const zoom = occurrences.length > 1 ? 13 : 15;
-  const mapKey = `${center.latitude.toFixed(5)}-${center.longitude.toFixed(5)}-${occurrences.length}`;
+  const zoom = getMapZoom(occurrences, showHeatmap);
+  const mapKey = `${center.latitude.toFixed(5)}-${center.longitude.toFixed(5)}-${occurrences.length}-${showHeatmap ? 'heat' : 'pins'}`;
 
   return (
     <div className={`${styles.wrapper} ${styles[height]}`}>
@@ -98,6 +120,21 @@ export function OccurrenceMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
+        {showHeatmap && occurrences.map((occurrence) => (
+          <CircleMarker
+            key={`heat-${occurrence.id}`}
+            center={[occurrence.latitude, occurrence.longitude]}
+            radius={getHeatRadius(occurrence)}
+            pathOptions={{
+              color: '#d97706',
+              fillColor: '#f97316',
+              fillOpacity: occurrence.status === 'resolved' ? 0.18 : 0.34,
+              opacity: 0.22,
+              weight: 1,
+            }}
+          />
+        ))}
+
         {occurrences.map((occurrence) => {
           const category = getCategoryById(occurrence.category);
           const status = getStatusInfo(occurrence.status);
@@ -107,6 +144,7 @@ export function OccurrenceMap({
               key={occurrence.id}
               position={[occurrence.latitude, occurrence.longitude]}
               icon={createMarkerIcon(occurrence, selectedOccurrenceId === occurrence.id)}
+              opacity={showHeatmap ? 0.82 : 1}
             >
               <Popup>
                 <div className={styles.popup}>

@@ -8,12 +8,14 @@ import { Card } from '../../components/ui/Card';
 import { getOccurrencesFromSupabase } from '../../services/supabase/occurrencesSupabaseService';
 import type { Occurrence } from '../../types/occurrence';
 import { occurrenceCategories } from '../../utils/categories';
+import { buildDashboardMetrics } from '../../utils/dashboardMetrics';
 import type { OccurrenceStatus } from '../../utils/statusLabels';
 
 import styles from './styles.module.css';
 
 type StatusFilter = 'all' | OccurrenceStatus;
 type CategoryFilter = 'all' | string;
+type MapMode = 'pins' | 'heatmap';
 
 const statusFilters: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: 'Todas' },
@@ -40,6 +42,7 @@ export function MapPage() {
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [mapMode, setMapMode] = useState<MapMode>('pins');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -81,12 +84,14 @@ export function MapPage() {
     [occurrences, statusFilter, categoryFilter],
   );
 
+  const metrics = useMemo(() => buildDashboardMetrics(filteredOccurrences), [filteredOccurrences]);
+
   return (
     <div className="page stack">
       <PageHeader
         eyebrow="Mapa"
         title="Mapa da comunidade"
-        description="Visualize as ocorrências registradas com localização real no mapa. Agora os dados são lidos do Supabase."
+        description="Visualize as ocorrências registradas, alterne entre pins e mapa de calor, e encontre áreas com maior concentração de problemas."
         action={<Button to="/occurrences/new">Registrar</Button>}
       />
 
@@ -99,6 +104,23 @@ export function MapPage() {
           <Button to="/occurrences" variant="ghost">
             Ver lista
           </Button>
+        </div>
+
+        <div className={styles.modeGroup} aria-label="Modo de visualização do mapa">
+          <button
+            type="button"
+            className={mapMode === 'pins' ? styles.activeMode : styles.modeButton}
+            onClick={() => setMapMode('pins')}
+          >
+            📍 Pins
+          </button>
+          <button
+            type="button"
+            className={mapMode === 'heatmap' ? styles.activeMode : styles.modeButton}
+            onClick={() => setMapMode('heatmap')}
+          >
+            🔥 Calor
+          </button>
         </div>
 
         <div className={styles.filterGroup} aria-label="Filtrar por status">
@@ -136,7 +158,73 @@ export function MapPage() {
       </Card>
 
       {error && <Card><p>{error}</p></Card>}
-      {loading ? <Card><p>Carregando mapa...</p></Card> : <OccurrenceMap occurrences={filteredOccurrences} height="large" />}
+      {loading ? (
+        <Card><p>Carregando mapa...</p></Card>
+      ) : (
+        <OccurrenceMap
+          occurrences={filteredOccurrences}
+          height="large"
+          showHeatmap={mapMode === 'heatmap'}
+        />
+      )}
+
+      <section className={styles.insightsGrid}>
+        <Card className={styles.insightCard}>
+          <span>Taxa de resolução</span>
+          <strong>{metrics.resolutionRate}%</strong>
+          <p>{metrics.resolved} de {metrics.total} ocorrência(s) resolvida(s).</p>
+        </Card>
+        <Card className={styles.insightCard}>
+          <span>Em revisão</span>
+          <strong>{metrics.underReview}</strong>
+          <p>{metrics.reviewRate}% dos registros filtrados precisam de atenção.</p>
+        </Card>
+      </section>
+
+      <section className="section">
+        <div className={styles.sectionTitleRow}>
+          <h2>Pontos críticos</h2>
+          <span>Top categorias e bairros do filtro atual.</span>
+        </div>
+
+        <div className={styles.metricGrid}>
+          <Card>
+            <h3>Categorias</h3>
+            <div className={styles.barsList}>
+              {metrics.byCategory.slice(0, 5).map((item) => (
+                <div key={item.id} className={styles.barItem}>
+                  <div>
+                    <span>{item.icon} {item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                  <div className={styles.barTrack}>
+                    <span style={{ width: `${item.percent}%` }} />
+                  </div>
+                </div>
+              ))}
+              {metrics.byCategory.length === 0 && <p>Nenhuma categoria no filtro atual.</p>}
+            </div>
+          </Card>
+
+          <Card>
+            <h3>Bairros</h3>
+            <div className={styles.barsList}>
+              {metrics.byNeighborhood.slice(0, 5).map((item) => (
+                <div key={item.id} className={styles.barItem}>
+                  <div>
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                  <div className={styles.barTrack}>
+                    <span style={{ width: `${item.percent}%` }} />
+                  </div>
+                </div>
+              ))}
+              {metrics.byNeighborhood.length === 0 && <p>Nenhum bairro no filtro atual.</p>}
+            </div>
+          </Card>
+        </div>
+      </section>
 
       <section className="section">
         <div className={styles.sectionTitleRow}>
