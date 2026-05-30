@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -13,6 +13,7 @@ import {
   adminMarkOccurrenceAsDuplicatedInSupabase,
   getResolutionModerationItemsFromSupabase,
 } from '../../services/supabase/adminSupabaseService';
+import { signOutAdmin } from '../../services/supabase/authSupabaseService';
 import { getOccurrencesFromSupabase } from '../../services/supabase/occurrencesSupabaseService';
 import type { Occurrence, ResolutionModerationItem } from '../../types/occurrence';
 import { getCategoryById } from '../../utils/categories';
@@ -24,6 +25,7 @@ import styles from './styles.module.css';
 type ModerationTab = 'occurrences' | 'resolutions';
 
 export function AdminModeration() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<ModerationTab>('occurrences');
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [resolutionItems, setResolutionItems] = useState<ResolutionModerationItem[]>([]);
@@ -107,6 +109,11 @@ export function AdminModeration() {
     );
   }
 
+  async function handleLogout(): Promise<void> {
+    await signOutAdmin();
+    navigate('/admin/login', { replace: true });
+  }
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -114,7 +121,12 @@ export function AdminModeration() {
           <span>Moderação</span>
           <h1>Itens em revisão</h1>
         </div>
-        <Link to="/admin">Dashboard</Link>
+        <div className={styles.headerActions}>
+          <Link to="/admin">Dashboard</Link>
+          <Button type="button" variant="secondary" onClick={handleLogout}>
+            Sair
+          </Button>
+        </div>
       </header>
 
       <div className={styles.tabs}>

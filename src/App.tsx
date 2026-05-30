@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 
+import { ProtectedAdminRoute } from './components/auth/ProtectedAdminRoute';
 import { AppShell } from './components/layout/AppShell';
 import { About } from './pages/About';
 import { AdminDashboard } from './pages/AdminDashboard';
@@ -28,9 +29,24 @@ export default function App() {
         <Route path="/map" element={<MapPage />} />
         <Route path="/about" element={<About />} />
       </Route>
+
       <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/admin/moderation" element={<AdminModeration />} />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedAdminRoute>
+            <AdminDashboard />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/moderation"
+        element={
+          <ProtectedAdminRoute>
+            <AdminModeration />
+          </ProtectedAdminRoute>
+        }
+      />
     </Routes>
   );
 }

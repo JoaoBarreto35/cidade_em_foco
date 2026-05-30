@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
+import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import {
   getOccurrencesFromSupabase,
 } from '../../services/supabase/occurrencesSupabaseService';
 import { getResolutionModerationItemsFromSupabase } from '../../services/supabase/adminSupabaseService';
+import { signOutAdmin } from '../../services/supabase/authSupabaseService';
 import type { Occurrence, ResolutionModerationItem } from '../../types/occurrence';
 
 import styles from './styles.module.css';
 
 export function AdminDashboard() {
+  const navigate = useNavigate();
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [resolutionReviewItems, setResolutionReviewItems] = useState<ResolutionModerationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +64,11 @@ export function AdminDashboard() {
   );
   const resolved = occurrences.filter((occurrence) => occurrence.status === 'resolved').length;
 
+  async function handleLogout(): Promise<void> {
+    await signOutAdmin();
+    navigate('/admin/login', { replace: true });
+  }
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -68,7 +76,12 @@ export function AdminDashboard() {
           <span>Admin</span>
           <h1>Dashboard</h1>
         </div>
-        <Link to="/">Voltar ao app</Link>
+        <div className={styles.headerActions}>
+          <Link to="/">Ver app</Link>
+          <Button type="button" variant="secondary" onClick={handleLogout}>
+            Sair
+          </Button>
+        </div>
       </header>
 
       {error && <Card><p>{error}</p></Card>}
