@@ -1,1 +1,78 @@
-.content{display:grid;gap:.75rem}.content h2{margin:.25rem 0 0}.content p{margin:0;color:var(--color-muted);line-height:1.6}
+.content {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.kicker {
+  color: var(--color-primary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.content h2,
+.odsCard h3,
+.callout h2 {
+  margin: 0;
+  color: var(--color-text);
+  letter-spacing: -0.03em;
+}
+
+.content p,
+.odsCard p,
+.callout p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.65;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.odsCard {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.odsCard strong {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.35rem 0.65rem;
+  color: var(--color-primary-dark);
+  font-size: 0.78rem;
+  background: var(--color-primary-soft);
+  border-radius: 999px;
+}
+
+.steps {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.steps li::marker {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+.callout {
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (min-width: 760px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .callout {
+    grid-template-columns: 1fr auto;
+  }
+}
