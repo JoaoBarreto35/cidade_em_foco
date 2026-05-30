@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
 import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { getOccurrences } from '../../services/occurrencesLocalService';
+import { getOccurrencesFromSupabase } from '../../services/supabase/occurrencesSupabaseService';
+import type { Occurrence } from '../../types/occurrence';
 import { occurrenceCategories } from '../../utils/categories';
 import type { OccurrenceStatus } from '../../utils/statusLabels';
 
@@ -18,10 +20,45 @@ const statuses: Array<{ label: string; value: 'all' | OccurrenceStatus }> = [
 ];
 
 export function OccurrencesList() {
-  const occurrences = useMemo(() => getOccurrences(), []);
+  const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [status, setStatus] = useState<'all' | OccurrenceStatus>('all');
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadOccurrences(): Promise<void> {
+      try {
+        const data = await getOccurrencesFromSupabase();
+
+        if (active) {
+          setOccurrences(data);
+          setError('');
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Não foi possível carregar as ocorrências do banco.',
+          );
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadOccurrences();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filtered = useMemo(
     () =>
@@ -74,10 +111,15 @@ export function OccurrencesList() {
         </select>
       </section>
 
+      {error && <Card><p>{error}</p></Card>}
+      {loading && <Card><p>Carregando ocorrências do Supabase...</p></Card>}
+
       <section className="section">
-        {filtered.length > 0 ? (
+        {!loading && filtered.length > 0 ? (
           filtered.map((occurrence) => <OccurrenceCard key={occurrence.id} occurrence={occurrence} />)
-        ) : (
+        ) : null}
+
+        {!loading && filtered.length === 0 && (
           <EmptyState
             title="Nada encontrado"
             description="Tente mudar os filtros ou registre uma nova ocorrência."

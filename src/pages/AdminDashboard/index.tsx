@@ -1,16 +1,54 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Card } from '../../components/ui/Card';
 import {
-  getOccurrences,
-  getResolutionModerationItems,
-} from '../../services/occurrencesLocalService';
+  getOccurrencesFromSupabase,
+} from '../../services/supabase/occurrencesSupabaseService';
+import { getResolutionModerationItemsFromSupabase } from '../../services/supabase/adminSupabaseService';
+import type { Occurrence, ResolutionModerationItem } from '../../types/occurrence';
 
 import styles from './styles.module.css';
 
 export function AdminDashboard() {
-  const occurrences = getOccurrences();
-  const resolutionReviewItems = getResolutionModerationItems();
+  const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
+  const [resolutionReviewItems, setResolutionReviewItems] = useState<ResolutionModerationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDashboard(): Promise<void> {
+      try {
+        const [occurrencesData, resolutionItemsData] = await Promise.all([
+          getOccurrencesFromSupabase(),
+          getResolutionModerationItemsFromSupabase(),
+        ]);
+
+        if (active) {
+          setOccurrences(occurrencesData);
+          setResolutionReviewItems(resolutionItemsData);
+          setError('');
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar o dashboard.');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadDashboard();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const occurrenceReview = occurrences.filter(
     (occurrence) => occurrence.status === 'under_review' || occurrence.reportsCount >= 3,
   ).length;
@@ -32,6 +70,9 @@ export function AdminDashboard() {
         </div>
         <Link to="/">Voltar ao app</Link>
       </header>
+
+      {error && <Card><p>{error}</p></Card>}
+      {loading && <Card><p>Carregando dados do Supabase...</p></Card>}
 
       <section className={styles.grid}>
         <Card>

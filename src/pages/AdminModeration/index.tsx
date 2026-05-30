@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Badge } from '../../components/ui/Badge';
@@ -6,14 +6,15 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
 import {
-  adminCancelOccurrence,
-  adminCancelResolutionVote,
-  adminKeepOccurrence,
-  adminKeepResolutionVote,
-  adminMarkOccurrenceAsDuplicated,
-  getOccurrences,
-  getResolutionModerationItems,
-} from '../../services/occurrencesLocalService';
+  adminCancelOccurrenceInSupabase,
+  adminCancelResolutionVoteInSupabase,
+  adminKeepOccurrenceInSupabase,
+  adminKeepResolutionVoteInSupabase,
+  adminMarkOccurrenceAsDuplicatedInSupabase,
+  getResolutionModerationItemsFromSupabase,
+} from '../../services/supabase/adminSupabaseService';
+import { getOccurrencesFromSupabase } from '../../services/supabase/occurrencesSupabaseService';
+import type { Occurrence, ResolutionModerationItem } from '../../types/occurrence';
 import { getCategoryById } from '../../utils/categories';
 import { formatDate } from '../../utils/formatDate';
 import { getStatusInfo } from '../../utils/statusLabels';
@@ -24,47 +25,90 @@ type ModerationTab = 'occurrences' | 'resolutions';
 
 export function AdminModeration() {
   const [tab, setTab] = useState<ModerationTab>('occurrences');
-  const [version, setVersion] = useState(0);
+  const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
+  const [resolutionItems, setResolutionItems] = useState<ResolutionModerationItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  const occurrences = getOccurrences();
+  async function loadModeration(): Promise<void> {
+    setLoading(true);
+
+    try {
+      const [occurrencesData, resolutionItemsData] = await Promise.all([
+        getOccurrencesFromSupabase(),
+        getResolutionModerationItemsFromSupabase(),
+      ]);
+
+      setOccurrences(occurrencesData);
+      setResolutionItems(resolutionItemsData);
+      setError('');
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar a moderação.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadModeration();
+  }, []);
+
   const occurrenceItems = occurrences.filter(
     (item) => item.status === 'under_review' || item.reportsCount >= 3,
   );
-  const resolutionItems = getResolutionModerationItems();
 
-  function refresh(nextMessage: string) {
-    setMessage(nextMessage);
-    setVersion((current) => current + 1);
+  async function runAction(action: () => Promise<{ success: boolean; error?: string }>, successMessage: string) {
+    setMessage('');
+    const result = await action();
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    setError('');
+    setMessage(successMessage);
+    await loadModeration();
   }
 
   function handleKeepOccurrence(occurrenceId: string) {
-    const result = adminKeepOccurrence(occurrenceId);
-    refresh(result.error ?? 'Ocorrência mantida e retirada da revisão.');
+    void runAction(
+      () => adminKeepOccurrenceInSupabase(occurrenceId),
+      'Ocorrência mantida e retirada da revisão.',
+    );
   }
 
   function handleCancelOccurrence(occurrenceId: string) {
-    const result = adminCancelOccurrence(occurrenceId);
-    refresh(result.error ?? 'Ocorrência cancelada pela moderação.');
+    void runAction(
+      () => adminCancelOccurrenceInSupabase(occurrenceId),
+      'Ocorrência cancelada pela moderação.',
+    );
   }
 
   function handleDuplicateOccurrence(occurrenceId: string) {
-    const result = adminMarkOccurrenceAsDuplicated(occurrenceId);
-    refresh(result.error ?? 'Ocorrência marcada como duplicada.');
+    void runAction(
+      () => adminMarkOccurrenceAsDuplicatedInSupabase(occurrenceId),
+      'Ocorrência marcada como duplicada.',
+    );
   }
 
-  function handleKeepResolution(occurrenceId: string, resolutionVoteId: string) {
-    const result = adminKeepResolutionVote(occurrenceId, resolutionVoteId);
-    refresh(result.error ?? 'Resolução mantida e voltou a contar como válida.');
+  function handleKeepResolution(resolutionVoteId: string) {
+    void runAction(
+      () => adminKeepResolutionVoteInSupabase(resolutionVoteId),
+      'Resolução mantida e voltou a contar como válida.',
+    );
   }
 
-  function handleCancelResolution(occurrenceId: string, resolutionVoteId: string) {
-    const result = adminCancelResolutionVote(occurrenceId, resolutionVoteId);
-    refresh(result.error ?? 'Resolução cancelada e status da ocorrência recalculado.');
+  function handleCancelResolution(resolutionVoteId: string) {
+    void runAction(
+      () => adminCancelResolutionVoteInSupabase(resolutionVoteId),
+      'Resolução cancelada e status da ocorrência recalculado.',
+    );
   }
 
   return (
-    <main className={styles.page} data-version={version}>
+    <main className={styles.page}>
       <header className={styles.header}>
         <div>
           <span>Moderação</span>
@@ -90,9 +134,11 @@ export function AdminModeration() {
         </button>
       </div>
 
+      {loading && <Card><p>Carregando moderação...</p></Card>}
       {message && <p className={styles.message}>{message}</p>}
+      {error && <p className={styles.message}>{error}</p>}
 
-      {tab === 'occurrences' && (
+      {!loading && tab === 'occurrences' && (
         <section className="section">
           {occurrenceItems.length > 0 ? (
             occurrenceItems.map((item) => {
@@ -153,7 +199,7 @@ export function AdminModeration() {
         </section>
       )}
 
-      {tab === 'resolutions' && (
+      {!loading && tab === 'resolutions' && (
         <section className="section">
           {resolutionItems.length > 0 ? (
             resolutionItems.map(({ occurrence, vote }) => (
@@ -179,14 +225,14 @@ export function AdminModeration() {
                 <div className={styles.actions}>
                   <Button
                     type="button"
-                    onClick={() => handleKeepResolution(occurrence.id, vote.id)}
+                    onClick={() => handleKeepResolution(vote.id)}
                     fullWidth
                   >
                     Manter resolução
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => handleCancelResolution(occurrence.id, vote.id)}
+                    onClick={() => handleCancelResolution(vote.id)}
                     variant="danger"
                     fullWidth
                   >

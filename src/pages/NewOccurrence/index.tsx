@@ -5,7 +5,7 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { LocationPicker } from '../../components/map/LocationPicker';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { createOccurrence } from '../../services/occurrencesLocalService';
+import { createOccurrenceInSupabase } from '../../services/supabase/occurrencesSupabaseService';
 import { occurrenceCategories } from '../../utils/categories';
 import { getVisitorId } from '../../utils/visitorId';
 
@@ -46,12 +46,14 @@ export function NewOccurrence() {
   const [reference, setReference] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const isValid = Boolean(
-    category && description.trim().length >= 10 && photoUrl && coordinates,
+    category && description.trim().length >= 10 && photoFile && coordinates,
   );
 
   async function handlePhotoChange(fileList: FileList | null): Promise<void> {
@@ -64,6 +66,7 @@ export function NewOccurrence() {
     try {
       const dataUrl = await readImageAsDataUrl(file);
       setPhotoUrl(dataUrl);
+      setPhotoFile(file);
       setError('');
     } catch {
       setError('Não foi possível carregar a foto. Tente outra imagem.');
@@ -98,24 +101,37 @@ export function NewOccurrence() {
     );
   }
 
-  function handleSubmit(): void {
-    if (!isValid || !coordinates) {
+  async function handleSubmit(): Promise<void> {
+    if (!isValid || !coordinates || !photoFile) {
       setError('Preencha categoria, descrição, foto e localização para continuar.');
       return;
     }
 
-    const occurrence = createOccurrence({
-      category,
-      description: description.trim(),
-      photoUrl,
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-      reference: reference.trim() || 'Referência não informada',
-      neighborhood: neighborhood.trim() || 'Não informado',
-      anonymousAuthorId: getVisitorId(),
-    });
+    setSubmitting(true);
+    setError('');
 
-    navigate(`/occurrences/${occurrence.id}`);
+    const result = await createOccurrenceInSupabase(
+      {
+        category,
+        description: description.trim(),
+        photoUrl: '',
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        reference: reference.trim() || 'Referência não informada',
+        neighborhood: neighborhood.trim() || 'Não informado',
+        anonymousAuthorId: getVisitorId(),
+      },
+      photoFile,
+    );
+
+    setSubmitting(false);
+
+    if (result.error || !result.data) {
+      setError(result.error ?? 'Não foi possível salvar a ocorrência no banco.');
+      return;
+    }
+
+    navigate(`/occurrences/${result.data.id}`);
   }
 
   return (
@@ -206,8 +222,8 @@ export function NewOccurrence() {
             />
           </div>
 
-          <Button type="button" fullWidth disabled={!isValid} onClick={handleSubmit}>
-            Enviar ocorrência
+          <Button type="button" fullWidth disabled={!isValid || submitting} onClick={() => void handleSubmit()}>
+            {submitting ? 'Salvando no Supabase...' : 'Enviar ocorrência'}
           </Button>
 
           {!isValid && (

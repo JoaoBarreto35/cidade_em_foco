@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -6,9 +6,10 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
 import {
-  createResolutionVote,
-  getOccurrenceById,
-} from '../../services/occurrencesLocalService';
+  createResolutionVoteInSupabase,
+  getOccurrenceByIdFromSupabase,
+} from '../../services/supabase/occurrencesSupabaseService';
+import type { Occurrence } from '../../types/occurrence';
 import { getVisitorId } from '../../utils/visitorId';
 
 import styles from './styles.module.css';
@@ -34,21 +35,47 @@ function readImageAsDataUrl(file: File): Promise<string> {
 export function ResolveOccurrence() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const occurrence = id ? getOccurrenceById(id) : undefined;
+  const [occurrence, setOccurrence] = useState<Occurrence | undefined>();
+  const [loading, setLoading] = useState(true);
   const [photoUrl, setPhotoUrl] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  if (!occurrence) {
-    return (
-      <EmptyState
-        title="Ocorrência não encontrada"
-        description="Não encontramos o registro para enviar uma confirmação."
-        actionLabel="Voltar para lista"
-        actionTo="/occurrences"
-      />
-    );
-  }
+  useEffect(() => {
+    let active = true;
+
+    async function loadOccurrence(): Promise<void> {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const data = await getOccurrenceByIdFromSupabase(id);
+
+        if (active) {
+          setOccurrence(data);
+          setError('');
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar a ocorrência.');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadOccurrence();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   async function handlePhotoChange(fileList: FileList | null): Promise<void> {
     const file = fileList?.[0];
@@ -60,24 +87,33 @@ export function ResolveOccurrence() {
     try {
       const dataUrl = await readImageAsDataUrl(file);
       setPhotoUrl(dataUrl);
+      setPhotoFile(file);
       setError('');
     } catch {
       setError('Não foi possível carregar a foto. Tente outra imagem.');
     }
   }
 
-  function handleSubmit(): void {
-    if (!photoUrl || !occurrence) {
+  async function handleSubmit(): Promise<void> {
+    if (!photoFile || !occurrence) {
       setError('Envie uma foto atual para confirmar a resolução.');
       return;
     }
 
-    const result = createResolutionVote({
-      occurrenceId: occurrence.id,
-      photoUrl,
-      note: note.trim() || undefined,
-      anonymousVisitorId: getVisitorId(),
-    });
+    setSubmitting(true);
+    setError('');
+
+    const result = await createResolutionVoteInSupabase(
+      {
+        occurrenceId: occurrence.id,
+        photoUrl: '',
+        note: note.trim() || undefined,
+        anonymousVisitorId: getVisitorId(),
+      },
+      photoFile,
+    );
+
+    setSubmitting(false);
 
     if (result.error) {
       setError(result.error);
@@ -85,6 +121,21 @@ export function ResolveOccurrence() {
     }
 
     navigate(`/occurrences/${occurrence.id}`);
+  }
+
+  if (loading) {
+    return <Card><p>Carregando ocorrência...</p></Card>;
+  }
+
+  if (!occurrence) {
+    return (
+      <EmptyState
+        title="Ocorrência não encontrada"
+        description="Não encontramos o registro para enviar uma confirmação."
+        actionLabel="Voltar para lista"
+        actionTo="/occurrences"
+      />
+    );
   }
 
   return (
@@ -125,8 +176,8 @@ export function ResolveOccurrence() {
             />
           </div>
 
-          <Button type="button" fullWidth disabled={!photoUrl} onClick={handleSubmit}>
-            Enviar confirmação
+          <Button type="button" fullWidth disabled={!photoFile || submitting} onClick={() => void handleSubmit()}>
+            {submitting ? 'Salvando no Supabase...' : 'Enviar confirmação'}
           </Button>
 
           {error && <span className={styles.error}>{error}</span>}

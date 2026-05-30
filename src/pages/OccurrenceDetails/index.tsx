@@ -1,14 +1,15 @@
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { PageHeader } from '../../components/layout/PageHeader';
 import { OccurrenceMap } from '../../components/map/OccurrenceMap';
 import { ResolutionProgress } from '../../components/occurrences/ResolutionProgress';
-import { PageHeader } from '../../components/layout/PageHeader';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { getOccurrenceById } from '../../services/occurrencesLocalService';
-import type { ResolutionVoteStatus } from '../../types/occurrence';
+import { getOccurrenceByIdFromSupabase } from '../../services/supabase/occurrencesSupabaseService';
+import type { Occurrence, ResolutionVoteStatus } from '../../types/occurrence';
 import { getCategoryById } from '../../utils/categories';
 import { formatDate } from '../../utils/formatDate';
 import { getStatusInfo } from '../../utils/statusLabels';
@@ -37,13 +38,53 @@ const resolutionStatus: Record<ResolutionVoteStatus, ResolutionStatusView> = {
 
 export function OccurrenceDetails() {
   const { id } = useParams();
-  const occurrence = id ? getOccurrenceById(id) : undefined;
+  const [occurrence, setOccurrence] = useState<Occurrence | undefined>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadOccurrence(): Promise<void> {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const data = await getOccurrenceByIdFromSupabase(id);
+
+        if (active) {
+          setOccurrence(data);
+          setError('');
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar a ocorrência.');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadOccurrence();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (loading) {
+    return <Card><p>Carregando ocorrência...</p></Card>;
+  }
 
   if (!occurrence) {
     return (
       <EmptyState
         title="Ocorrência não encontrada"
-        description="O registro solicitado não existe ou foi removido."
+        description={error || 'O registro solicitado não existe ou foi removido.'}
         actionLabel="Voltar para lista"
         actionTo="/occurrences"
       />

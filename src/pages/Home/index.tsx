@@ -1,16 +1,53 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { getOccurrences } from '../../services/occurrencesLocalService';
+import { getOccurrencesFromSupabase } from '../../services/supabase/occurrencesSupabaseService';
+import type { Occurrence } from '../../types/occurrence';
 
 import styles from './styles.module.css';
 
 export function Home() {
-  const occurrences = useMemo(() => getOccurrences(), []);
+  const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadOccurrences(): Promise<void> {
+      try {
+        const data = await getOccurrencesFromSupabase();
+
+        if (active) {
+          setOccurrences(data);
+          setError('');
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Não foi possível carregar as ocorrências do banco.',
+          );
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadOccurrences();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const open = occurrences.filter((occurrence) => occurrence.status === 'open').length;
   const resolved = occurrences.filter((occurrence) => occurrence.status === 'resolved').length;
   const review = occurrences.filter((occurrence) => occurrence.status === 'under_review').length;
@@ -33,17 +70,19 @@ export function Home() {
         </Button>
       </section>
 
+      {error && <Card><p>{error}</p></Card>}
+
       <section className={styles.stats}>
         <Card>
-          <strong>{open}</strong>
+          <strong>{loading ? '...' : open}</strong>
           <span>Abertas</span>
         </Card>
         <Card>
-          <strong>{resolved}</strong>
+          <strong>{loading ? '...' : resolved}</strong>
           <span>Resolvidas</span>
         </Card>
         <Card>
-          <strong>{review}</strong>
+          <strong>{loading ? '...' : review}</strong>
           <span>Em revisão</span>
         </Card>
       </section>
@@ -65,7 +104,10 @@ export function Home() {
           <h2>Ocorrências recentes</h2>
           <Link to="/occurrences">Ver todas</Link>
         </div>
-        {occurrences.slice(0, 2).map((occurrence) => (
+
+        {loading && <Card><p>Carregando ocorrências do Supabase...</p></Card>}
+
+        {!loading && occurrences.slice(0, 2).map((occurrence) => (
           <OccurrenceCard key={occurrence.id} occurrence={occurrence} />
         ))}
       </section>

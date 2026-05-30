@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { PageHeader } from '../../components/layout/PageHeader';
 import { OccurrenceMap } from '../../components/map/OccurrenceMap';
 import { OccurrenceCard } from '../../components/occurrences/OccurrenceCard';
-import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { getOccurrences } from '../../services/occurrencesLocalService';
+import { getOccurrencesFromSupabase } from '../../services/supabase/occurrencesSupabaseService';
 import type { Occurrence } from '../../types/occurrence';
 import { occurrenceCategories } from '../../utils/categories';
 import type { OccurrenceStatus } from '../../utils/statusLabels';
@@ -37,9 +37,44 @@ function filterOccurrences(
 }
 
 export function MapPage() {
-  const occurrences = useMemo(() => getOccurrences(), []);
+  const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadOccurrences(): Promise<void> {
+      try {
+        const data = await getOccurrencesFromSupabase();
+
+        if (active) {
+          setOccurrences(data);
+          setError('');
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Não foi possível carregar o mapa com dados do banco.',
+          );
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadOccurrences();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredOccurrences = useMemo(
     () => filterOccurrences(occurrences, statusFilter, categoryFilter),
@@ -51,7 +86,7 @@ export function MapPage() {
       <PageHeader
         eyebrow="Mapa"
         title="Mapa da comunidade"
-        description="Visualize as ocorrências registradas com localização real no mapa. Os dados ainda ficam salvos no navegador nesta etapa."
+        description="Visualize as ocorrências registradas com localização real no mapa. Agora os dados são lidos do Supabase."
         action={<Button to="/occurrences/new">Registrar</Button>}
       />
 
@@ -59,7 +94,7 @@ export function MapPage() {
         <div className={styles.filtersHeader}>
           <div>
             <strong>Filtros do mapa</strong>
-            <span>{filteredOccurrences.length} ponto(s) encontrado(s)</span>
+            <span>{loading ? 'Carregando...' : `${filteredOccurrences.length} ponto(s) encontrado(s)`}</span>
           </div>
           <Button to="/occurrences" variant="ghost">
             Ver lista
@@ -100,7 +135,8 @@ export function MapPage() {
         </div>
       </Card>
 
-      <OccurrenceMap occurrences={filteredOccurrences} height="large" />
+      {error && <Card><p>{error}</p></Card>}
+      {loading ? <Card><p>Carregando mapa...</p></Card> : <OccurrenceMap occurrences={filteredOccurrences} height="large" />}
 
       <section className="section">
         <div className={styles.sectionTitleRow}>
