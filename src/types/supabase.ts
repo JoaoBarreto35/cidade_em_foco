@@ -11,26 +11,31 @@ export type Database = {
         Row: ProfileRow;
         Insert: ProfileInsert;
         Update: ProfileUpdate;
+        Relationships: [];
       };
       occurrences: {
         Row: OccurrenceRow;
         Insert: OccurrenceInsert;
         Update: OccurrenceUpdate;
+        Relationships: [];
       };
       resolution_votes: {
         Row: ResolutionVoteRow;
         Insert: ResolutionVoteInsert;
         Update: ResolutionVoteUpdate;
+        Relationships: [];
       };
       occurrence_reports: {
         Row: OccurrenceReportRow;
         Insert: OccurrenceReportInsert;
         Update: OccurrenceReportUpdate;
+        Relationships: [];
       };
       resolution_reports: {
         Row: ResolutionReportRow;
         Insert: ResolutionReportInsert;
         Update: ResolutionReportUpdate;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

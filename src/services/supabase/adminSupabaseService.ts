@@ -23,84 +23,81 @@ export async function getOccurrencesUnderReviewFromSupabase(): Promise<Occurrenc
   return occurrences.filter((occurrence) => occurrence.status === 'under_review');
 }
 
-async function runAdminRpc(
-  rpcName:
-    | 'admin_keep_occurrence'
-    | 'admin_cancel_occurrence'
-    | 'admin_mark_occurrence_as_duplicated',
+function formatAdminError(errorMessage: string): AdminActionResult {
+  return { success: false, error: errorMessage };
+}
+
+export async function adminKeepOccurrenceInSupabase(
   occurrenceId: string,
-  notes: string,
 ): Promise<AdminActionResult> {
-  const { error } = await supabase.rpc(rpcName, {
+  const { error } = await supabase.rpc('admin_keep_occurrence', {
     target_occurrence_id: occurrenceId,
-    target_notes: notes,
+    target_notes: 'Ocorrência mantida após revisão administrativa.',
   });
 
   if (error) {
-    return { success: false, error: error.message };
+    return formatAdminError(error.message);
   }
 
   return { success: true };
 }
 
-async function runResolutionAdminRpc(
-  rpcName: 'admin_keep_resolution_vote' | 'admin_cancel_resolution_vote',
-  resolutionVoteId: string,
-  notes: string,
-): Promise<AdminActionResult> {
-  const { error } = await supabase.rpc(rpcName, {
-    target_resolution_vote_id: resolutionVoteId,
-    target_notes: notes,
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
-}
-
-export function adminKeepOccurrenceInSupabase(occurrenceId: string): Promise<AdminActionResult> {
-  return runAdminRpc(
-    'admin_keep_occurrence',
-    occurrenceId,
-    'Ocorrência mantida após revisão administrativa.',
-  );
-}
-
-export function adminCancelOccurrenceInSupabase(occurrenceId: string): Promise<AdminActionResult> {
-  return runAdminRpc(
-    'admin_cancel_occurrence',
-    occurrenceId,
-    'Ocorrência cancelada pela moderação.',
-  );
-}
-
-export function adminMarkOccurrenceAsDuplicatedInSupabase(
+export async function adminCancelOccurrenceInSupabase(
   occurrenceId: string,
 ): Promise<AdminActionResult> {
-  return runAdminRpc(
-    'admin_mark_occurrence_as_duplicated',
-    occurrenceId,
-    'Ocorrência marcada como duplicada pela moderação.',
-  );
+  const { error } = await supabase.rpc('admin_cancel_occurrence', {
+    target_occurrence_id: occurrenceId,
+    target_notes: 'Ocorrência cancelada pela moderação.',
+  });
+
+  if (error) {
+    return formatAdminError(error.message);
+  }
+
+  return { success: true };
 }
 
-export function adminKeepResolutionVoteInSupabase(
+export async function adminMarkOccurrenceAsDuplicatedInSupabase(
+  occurrenceId: string,
+): Promise<AdminActionResult> {
+  const { error } = await supabase.rpc('admin_mark_occurrence_as_duplicated', {
+    target_occurrence_id: occurrenceId,
+    target_notes: 'Ocorrência marcada como duplicada pela moderação.',
+  });
+
+  if (error) {
+    return formatAdminError(error.message);
+  }
+
+  return { success: true };
+}
+
+export async function adminKeepResolutionVoteInSupabase(
   resolutionVoteId: string,
 ): Promise<AdminActionResult> {
-  return runResolutionAdminRpc(
-    'admin_keep_resolution_vote',
-    resolutionVoteId,
-    'Resolução mantida após revisão administrativa.',
-  );
+  const { error } = await supabase.rpc('admin_keep_resolution_vote', {
+    target_resolution_vote_id: resolutionVoteId,
+    target_notes: 'Resolução mantida após revisão administrativa.',
+  });
+
+  if (error) {
+    return formatAdminError(error.message);
+  }
+
+  return { success: true };
 }
 
-export function adminCancelResolutionVoteInSupabase(
-  resolutionVoteId: string): Promise<AdminActionResult> {
-  return runResolutionAdminRpc(
-    'admin_cancel_resolution_vote',
-    resolutionVoteId,
-    'Resolução cancelada pela moderação.',
-  );
+export async function adminCancelResolutionVoteInSupabase(
+  resolutionVoteId: string,
+): Promise<AdminActionResult> {
+  const { error } = await supabase.rpc('admin_cancel_resolution_vote', {
+    target_resolution_vote_id: resolutionVoteId,
+    target_notes: 'Resolução cancelada pela moderação.',
+  });
+
+  if (error) {
+    return formatAdminError(error.message);
+  }
+
+  return { success: true };
 }

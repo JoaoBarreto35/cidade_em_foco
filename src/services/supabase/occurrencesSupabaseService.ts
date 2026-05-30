@@ -5,6 +5,7 @@ import type {
   CreateResolutionVoteInput,
   Occurrence,
 } from '../../types/occurrence';
+import type { OccurrenceRow, ResolutionVoteRow } from '../../types/supabase';
 import { getCategoryById } from '../../utils/categories';
 import { supabase } from '../supabaseClient';
 import { mapOccurrenceRowToOccurrence } from './mappers';
@@ -15,7 +16,9 @@ type ServiceResult<T> = {
   error?: string;
 };
 
-type OccurrenceQueryRow = Parameters<typeof mapOccurrenceRowToOccurrence>[0];
+type OccurrenceQueryRow = OccurrenceRow & {
+  resolution_votes?: ResolutionVoteRow[] | null;
+};
 
 function buildOccurrenceTitle(categoryId: string): string {
   return getCategoryById(categoryId).label;
@@ -29,25 +32,65 @@ function normalizeDatabaseError(errorMessage: string): string {
   return errorMessage;
 }
 
-export async function getOccurrencesFromSupabase(): Promise<Occurrence[]> {
+async function getResolutionVotesByOccurrenceIds(
+  occurrenceIds: string[],
+): Promise<Map<string, ResolutionVoteRow[]>> {
+  const votesByOccurrenceId = new Map<string, ResolutionVoteRow[]>();
+
+  if (occurrenceIds.length === 0) {
+    return votesByOccurrenceId;
+  }
+
   const { data, error } = await supabase
-    .from('occurrences')
-    .select('*, resolution_votes(*)')
+    .from('resolution_votes')
+    .select('*')
+    .in('occurrence_id', occurrenceIds)
     .order('created_at', { ascending: false });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return ((data ?? []) as OccurrenceQueryRow[]).map(mapOccurrenceRowToOccurrence);
+  (data ?? []).forEach((vote) => {
+    const currentVotes = votesByOccurrenceId.get(vote.occurrence_id) ?? [];
+    votesByOccurrenceId.set(vote.occurrence_id, [...currentVotes, vote]);
+  });
+
+  return votesByOccurrenceId;
+}
+
+function attachVotesToOccurrenceRows(
+  occurrenceRows: OccurrenceRow[],
+  votesByOccurrenceId: Map<string, ResolutionVoteRow[]>,
+): OccurrenceQueryRow[] {
+  return occurrenceRows.map((occurrence) => ({
+    ...occurrence,
+    resolution_votes: votesByOccurrenceId.get(occurrence.id) ?? [],
+  }));
+}
+
+export async function getOccurrencesFromSupabase(): Promise<Occurrence[]> {
+  const { data, error } = await supabase
+    .from('occurrences')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const occurrenceRows = data ?? [];
+  const votesByOccurrenceId = await getResolutionVotesByOccurrenceIds(
+    occurrenceRows.map((occurrence) => occurrence.id),
+  );
+
+  return attachVotesToOccurrenceRows(occurrenceRows, votesByOccurrenceId).map(
+    mapOccurrenceRowToOccurrence,
+  );
 }
 
 export async function getOccurrenceByIdFromSupabase(id: string): Promise<Occurrence | undefined> {
-  const { data, error } = await supabase
-    .from('occurrences')
-    .select('*, resolution_votes(*)')
-    .eq('id', id)
-    .maybeSingle();
+  const { data, error } = await supabase.from('occurrences').select('*').eq('id', id).maybeSingle();
 
   if (error) {
     throw new Error(error.message);
@@ -57,7 +100,13 @@ export async function getOccurrenceByIdFromSupabase(id: string): Promise<Occurre
     return undefined;
   }
 
-  return mapOccurrenceRowToOccurrence(data as OccurrenceQueryRow);
+  const votesByOccurrenceId = await getResolutionVotesByOccurrenceIds([data.id]);
+  const occurrenceWithVotes: OccurrenceQueryRow = {
+    ...data,
+    resolution_votes: votesByOccurrenceId.get(data.id) ?? [],
+  };
+
+  return mapOccurrenceRowToOccurrence(occurrenceWithVotes);
 }
 
 export async function createOccurrenceInSupabase(
@@ -81,14 +130,19 @@ export async function createOccurrenceInSupabase(
         neighborhood: input.neighborhood || null,
         anonymous_author_id: input.anonymousAuthorId,
       })
-      .select('*, resolution_votes(*)')
+      .select('*')
       .single();
 
     if (error) {
       return { error: normalizeDatabaseError(error.message) };
     }
 
-    return { data: mapOccurrenceRowToOccurrence(data as OccurrenceQueryRow) };
+    return {
+      data: mapOccurrenceRowToOccurrence({
+        ...data,
+        resolution_votes: [],
+      }),
+    };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'Não foi possível cadastrar a ocorrência.',
